@@ -13,6 +13,7 @@ if __name__ == "__main__":
                       default=21, type=int)
     (options, filenames) = parser.parse_args()
 
+    print "Hello!"
 
     for infile in filenames: #sys.argv[1:]:
 
