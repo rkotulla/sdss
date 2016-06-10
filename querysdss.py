@@ -63,17 +63,16 @@ if __name__ == "__main__":
     #
     for (run,rerun,camcol,field) in unique:
 
-        hdus = astroquery.sdss.SDSS.get_images(run=run,
-                                        rerun=rerun,
-                                        camcol=camcol,
-                                        field=field,
-                                        band=['g', 'r', 'i']
-                                          )
-        print(type(hdus), hdus)
+        for filtername in ['u', 'g', 'r', 'i', 'z']:
 
-        for i, rethdu in enumerate(hdus):
-            print type(rethdu)
-            rethdu.writeto("%s.%d.fits" % (objname, i), clobber=True)
-        #fits.PrimaryHDU(data=hdu[0].data).writeto("test.fits", clobber=True)
-        #hdulist = fits.HDUList(hdu)
-        #hdulist.writeto(objname+".fits", clobber=True)
+            hdus = astroquery.sdss.SDSS.get_images(run=run,
+                                            rerun=rerun,
+                                            camcol=camcol,
+                                            field=field,
+                                            band=filtername
+                                            )
+            print(type(hdus), hdus)
+
+            for i, rethdu in enumerate(hdus):
+                print type(rethdu)
+                rethdu.writeto("%s_%s.%d.fits" % (objname, filtername, i), clobber=True)
