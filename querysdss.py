@@ -61,18 +61,40 @@ if __name__ == "__main__":
     #
     # Now download the image
     #
-    for (run,rerun,camcol,field) in unique:
+    for pointing, (run,rerun,camcol,field) in enumerate(unique):
+
+        ugriz_hdus = {}
 
         for filtername in ['u', 'g', 'r', 'i', 'z']:
-
+            print("Downloading %s-band of %s (run=%d,rerun=%d,camcol=%d,field=%d)" % (
+                    filtername, objname, run, rerun, camcol, field))
             hdus = astroquery.sdss.SDSS.get_images(run=run,
                                             rerun=rerun,
                                             camcol=camcol,
                                             field=field,
                                             band=filtername
                                             )
-            print(type(hdus), hdus)
+            #print(type(hdus), hdus)
 
             for i, rethdu in enumerate(hdus):
-                print type(rethdu)
+                #print type(rethdu)
                 rethdu.writeto("%s_%s.%d.fits" % (objname, filtername, i), clobber=True)
+
+            ugriz_hdus[filtername] = hdus[0]
+
+        #
+        # Combine the gri bands for better S/N
+        #
+        print("combining g,r,i bands to improve S/N")
+        g = ugriz_hdus['g'][0].data
+        r = ugriz_hdus['r'][0].data
+        i = ugriz_hdus['i'][0].data
+        combined = g+r+i
+
+        gri_hdu = fits.HDUList(
+            [fits.PrimaryHDU(header=ugriz_hdus['g'][0].header),
+             fits.ImageHDU(header=ugriz_hdus['g'][0].header,
+                            data=combined)])
+        gri_hdu.writeto("%s_gri.%d.fits" % (objname,pointing), clobber=True)
+
+        print("All done with %s" % (objname))
