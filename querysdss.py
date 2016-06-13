@@ -16,6 +16,58 @@ import ephem
 
 import subprocess
 
+def stackfiles(imgout, weightout, inputlist, coverage_fn):
+    #
+    # Open the coverage file, find center coordinates and image size
+    # this then needs to be propagated to the stack and individual files below
+    #
+    coverage_hdu = fits.open(coverage_fn)
+
+
+    swarp_cmd = """swarp
+        -IMAGEOUT_NAME %(imgout)s
+        -WEIGHTOUT_NAME %(weightout)s
+        -WEIGHT_TYPE NONE
+        -COMBINE Y
+        -COMBINE_TYPE AVERAGE
+        -RESAMPLE Y
+        -SUBTRACT_BACK N
+        -CENTER_TYPE MANUAL
+        -CENTER %(ra)f,%(dec)f
+        -IMAGE_SIZE %(sx)d,%(sy)d
+        %(files)s
+        """ % {
+        'imgout': imgout,
+        'weightout': weightout,
+        'files': " ".join(inputlist),
+        'ra': coverage_hdu[0].header['CRVAL1'],
+        'dec': coverage_hdu[0].header['CRVAL2'],
+        'sx': coverage_hdu[0].header['NAXIS1'],
+        'sy': coverage_hdu[0].header['NAXIS2'],
+
+    }
+    print(" ".join(swarp_cmd.split()))
+    # g = ugriz_hdus['g'][0].data
+    # r = ugriz_hdus['r'][0].data
+    # i = ugriz_hdus['i'][0].data
+    # combined = g+r+i
+    #
+    #     gri_hdu = fits.HDUList(
+    #         [fits.PrimaryHDU(header=ugriz_hdus['g'][0].header),
+    #          fits.ImageHDU(header=ugriz_hdus['g'][0].header,
+    #                         data=combined)])
+    #     gri_hdu.writeto("%s_gri.%d.fits" % (objname,pointing), clobber=True)
+    #
+    ret = subprocess.Popen(swarp_cmd.split(),
+                           stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE)
+    (_stdout, _stderr) = ret.communicate()
+    if (ret.returncode != 0):
+        print("There was a problem creating %s" % (imgout))
+
+    return True
+
+
 if __name__ == "__main__":
 
     objname = sys.argv[1]
@@ -40,7 +92,7 @@ if __name__ == "__main__":
     print(coords)
 
 
-    search_radius = astropy.coordinates.Angle(1./60, unit=astropy.units.deg)
+    search_radius = astropy.coordinates.Angle(10./60, unit=astropy.units.deg)
     xid = astroquery.sdss.SDSS.query_region(coords, radius=search_radius)
 
     print(xid)
@@ -78,12 +130,13 @@ if __name__ == "__main__":
                                             band=filtername
                                             )
             #print(type(hdus), hdus)
-            ugriz_filenames[filtername] = []
+            if (not filtername in ugriz_filenames):
+                ugriz_filenames[filtername] = []
 
             for i, rethdu in enumerate(hdus):
                 del rethdu[1:]
                 #print type(rethdu)
-                out_fn = "%s_%s.%d.raw.fits" % (objname, filtername, i)
+                out_fn = "%s_%s.%d_%d.raw.fits" % (objname, filtername, pointing, i)
                 rethdu.writeto(out_fn, clobber=True)
                 ugriz_filenames[filtername].append(out_fn)
                 allfiles.append(out_fn)
@@ -116,10 +169,6 @@ if __name__ == "__main__":
     # this then needs to be propagated to the stack and individual files below
     #
     coverage_hdu = fits.open(coverage_fn)
-    center_ra = coverage_hdu[0].header['CRVAL1']
-    center_dec = coverage_hdu[0].header['CRVAL2']
-    imgsize_x = coverage_hdu[0].header['NAXIS1']
-    imgsize_y = coverage_hdu[0].header['NAXIS2']
 
     #
     # Now stack all g/r/i files, making sure to use the full grid as found via the coverage check above
@@ -132,46 +181,70 @@ if __name__ == "__main__":
     weight_fn = "%s_gri.weight.fits" % (objname)
     gri_fn = "%s_gri.fits" % (objname)
 
-    swarp_cmd = """swarp
-        -IMAGEOUT_NAME %(imgout)s
-        -WEIGHTOUT_NAME %(weightout)s
-        -WEIGHT_TYPE NONE
-        -COMBINE Y
-        -COMBINE_TYPE AVERAGE
-        -RESAMPLE Y
-        -SUBTRACT_BACK N
-        -CENTER_TYPE MANUAL
-        -CENTER %(ra)f,%(dec)f
-        -IMAGE_SIZE %(sx)d,%(sy)d
-        %(files)s
-        """  % {
-        'imgout': raw_fn,
-        'weightout': weight_fn,
-        'files': " ".join(allfiles),
-        'ra': coverage_hdu[0].header['CRVAL1'],
-        'dec': coverage_hdu[0].header['CRVAL2'],
-        'sx': coverage_hdu[0].header['NAXIS1'],
-        'sy': coverage_hdu[0].header['NAXIS2'],
+    stackfiles(imgout=raw_fn,
+               weightout=weight_fn,
+               inputlist=allfiles,
+               coverage_fn=coverage_fn)
 
-    }
-    print(" ".join(swarp_cmd.split()))
-    # g = ugriz_hdus['g'][0].data
-    # r = ugriz_hdus['r'][0].data
-    # i = ugriz_hdus['i'][0].data
-    # combined = g+r+i
     #
-    #     gri_hdu = fits.HDUList(
-    #         [fits.PrimaryHDU(header=ugriz_hdus['g'][0].header),
-    #          fits.ImageHDU(header=ugriz_hdus['g'][0].header,
-    #                         data=combined)])
-    #     gri_hdu.writeto("%s_gri.%d.fits" % (objname,pointing), clobber=True)
+    # Add file headers
     #
-    ret = subprocess.Popen(swarp_cmd.split(),
-                           stdout=subprocess.PIPE,
-                           stderr=subprocess.PIPE)
-    (_stdout, _stderr) = ret.communicate()
-    if (ret.returncode != 0):
-        print("There was a problem creating g/r/i image")
+
+
+    #
+    # Now compute de-projected frames for each of the filters
+    #
+    for filtername in ['g', 'r', 'i']:
+
+        raw_fn = "%s_%s.raw.fits" % (objname, filtername)
+        weight_fn = "%s_%s.weight.fits" % (objname, filtername)
+        gri_fn = "%s_%s.fits" % (objname, filtername)
+
+        stackfiles(imgout=raw_fn,
+                   weightout=weight_fn,
+                   inputlist=ugriz_filenames[filtername],
+                   coverage_fn=coverage_fn)
+
+    # swarp_cmd = """swarp
+    #     -IMAGEOUT_NAME %(imgout)s
+    #     -WEIGHTOUT_NAME %(weightout)s
+    #     -WEIGHT_TYPE NONE
+    #     -COMBINE Y
+    #     -COMBINE_TYPE AVERAGE
+    #     -RESAMPLE Y
+    #     -SUBTRACT_BACK N
+    #     -CENTER_TYPE MANUAL
+    #     -CENTER %(ra)f,%(dec)f
+    #     -IMAGE_SIZE %(sx)d,%(sy)d
+    #     %(files)s
+    #     """  % {
+    #     'imgout': raw_fn,
+    #     'weightout': weight_fn,
+    #     'files': " ".join(allfiles),
+    #     'ra': coverage_hdu[0].header['CRVAL1'],
+    #     'dec': coverage_hdu[0].header['CRVAL2'],
+    #     'sx': coverage_hdu[0].header['NAXIS1'],
+    #     'sy': coverage_hdu[0].header['NAXIS2'],
+    #
+    # }
+    # print(" ".join(swarp_cmd.split()))
+    # # g = ugriz_hdus['g'][0].data
+    # # r = ugriz_hdus['r'][0].data
+    # # i = ugriz_hdus['i'][0].data
+    # # combined = g+r+i
+    # #
+    # #     gri_hdu = fits.HDUList(
+    # #         [fits.PrimaryHDU(header=ugriz_hdus['g'][0].header),
+    # #          fits.ImageHDU(header=ugriz_hdus['g'][0].header,
+    # #                         data=combined)])
+    # #     gri_hdu.writeto("%s_gri.%d.fits" % (objname,pointing), clobber=True)
+    # #
+    # ret = subprocess.Popen(swarp_cmd.split(),
+    #                        stdout=subprocess.PIPE,
+    #                        stderr=subprocess.PIPE)
+    # (_stdout, _stderr) = ret.communicate()
+    # if (ret.returncode != 0):
+    #     print("There was a problem creating g/r/i image")
 
     #
     # Now open the resulting stack files, and
