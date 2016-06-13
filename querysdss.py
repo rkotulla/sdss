@@ -77,6 +77,13 @@ if __name__ == "__main__":
 
     objname = sys.argv[1]
 
+    #
+    # Create objname directory
+    #
+    try:
+        os.makedirs(objname)
+    except:
+        pass
 
     results = Simbad.query_object(objname)
 
@@ -141,7 +148,7 @@ if __name__ == "__main__":
             for i, rethdu in enumerate(hdus):
                 del rethdu[1:]
                 #print type(rethdu)
-                out_fn = "%s_%s.%d_%d.raw.fits" % (objname, filtername, pointing, i)
+                out_fn = "%s/%s_%s.%d_%d.raw.fits" % (objname, objname, filtername, pointing, i)
                 rethdu.writeto(out_fn, clobber=True)
                 ugriz_filenames[filtername].append(out_fn)
                 allfiles.append(out_fn)
@@ -156,7 +163,7 @@ if __name__ == "__main__":
     #
     # First, stack all files available to get total area
     #
-    coverage_fn = "%s.sdss_coverage.fits" % (objname)
+    coverage_fn = "%s/%s.sdss_coverage.fits" % (objname, objname)
     swarp_cmd = """swarp
         -IMAGEOUT_NAME %s
         -HEADER_ONLY Y
@@ -182,9 +189,9 @@ if __name__ == "__main__":
     for filtername in ['g', 'r', 'i']:
         allfiles += ugriz_filenames[filtername]
 
-    raw_fn = "%s_gri.raw.fits" % (objname)
-    weight_fn = "%s_gri.weight.fits" % (objname)
-    gri_fn = "%s_gri.fits" % (objname)
+    raw_fn = "%s/%s_gri.raw.fits" % (objname, objname)
+    weight_fn = "%s/%s_gri.weight.fits" % (objname, objname)
+    gri_fn = "%s/%s_gri.fits" % (objname, objname)
 
     stackfiles(imgout=raw_fn,
                weightout=weight_fn,
@@ -201,9 +208,9 @@ if __name__ == "__main__":
     #
     for filtername in ['g', 'r', 'i']:
 
-        raw_fn = "%s_%s.raw.fits" % (objname, filtername)
-        weight_fn = "%s_%s.weight.fits" % (objname, filtername)
-        gri_fn = "%s_%s.fits" % (objname, filtername)
+        raw_fn = "%s/%s_%s.raw.fits" % (objname, objname, filtername)
+        weight_fn = "%s/%s_%s.weight.fits" % (objname, objname, filtername)
+        gri_fn = "%s/%s_%s.fits" % (objname, objname, filtername)
 
         stackfiles(imgout=raw_fn,
                    weightout=weight_fn,
