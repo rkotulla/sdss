@@ -210,47 +210,6 @@ if __name__ == "__main__":
                    inputlist=ugriz_filenames[filtername],
                    coverage_fn=coverage_fn)
 
-    # swarp_cmd = """swarp
-    #     -IMAGEOUT_NAME %(imgout)s
-    #     -WEIGHTOUT_NAME %(weightout)s
-    #     -WEIGHT_TYPE NONE
-    #     -COMBINE Y
-    #     -COMBINE_TYPE AVERAGE
-    #     -RESAMPLE Y
-    #     -SUBTRACT_BACK N
-    #     -CENTER_TYPE MANUAL
-    #     -CENTER %(ra)f,%(dec)f
-    #     -IMAGE_SIZE %(sx)d,%(sy)d
-    #     %(files)s
-    #     """  % {
-    #     'imgout': raw_fn,
-    #     'weightout': weight_fn,
-    #     'files': " ".join(allfiles),
-    #     'ra': coverage_hdu[0].header['CRVAL1'],
-    #     'dec': coverage_hdu[0].header['CRVAL2'],
-    #     'sx': coverage_hdu[0].header['NAXIS1'],
-    #     'sy': coverage_hdu[0].header['NAXIS2'],
-    #
-    # }
-    # print(" ".join(swarp_cmd.split()))
-    # # g = ugriz_hdus['g'][0].data
-    # # r = ugriz_hdus['r'][0].data
-    # # i = ugriz_hdus['i'][0].data
-    # # combined = g+r+i
-    # #
-    # #     gri_hdu = fits.HDUList(
-    # #         [fits.PrimaryHDU(header=ugriz_hdus['g'][0].header),
-    # #          fits.ImageHDU(header=ugriz_hdus['g'][0].header,
-    # #                         data=combined)])
-    # #     gri_hdu.writeto("%s_gri.%d.fits" % (objname,pointing), clobber=True)
-    # #
-    # ret = subprocess.Popen(swarp_cmd.split(),
-    #                        stdout=subprocess.PIPE,
-    #                        stderr=subprocess.PIPE)
-    # (_stdout, _stderr) = ret.communicate()
-    # if (ret.returncode != 0):
-    #     print("There was a problem creating g/r/i image")
-
     #
     # Now open the resulting stack files, and
     # - re-insert headers from original input frames
