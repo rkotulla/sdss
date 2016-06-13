@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 
-
+###############################################################
+#                                                             #
+# Copyright (c) 2016, Ralf Kotulla                            #
+#                     kotulla@wisc.edu                        #
+#                                                             #
+###############################################################
 
 import os, sys
 import astropy
