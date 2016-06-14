@@ -239,4 +239,10 @@ if __name__ == "__main__":
     # - mask all bad pixels (having 0 weights) with NaNs
     #
 
+    print("Deleting file cache")
+    try:
+        os.system("rm -rf /tmp/tmp*")
+    except:
+        pass
+
     print("All done with %s" % (objname))
