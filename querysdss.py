@@ -18,6 +18,7 @@ from astroquery.simbad import Simbad
 import astroquery.sdss
 
 import ephem
+import time
 
 import subprocess
 
@@ -129,18 +130,33 @@ if __name__ == "__main__":
     #
     ugriz_filenames = {}
     allfiles = []
+    n_retry_max = 5
     for pointing, (run,rerun,camcol,field) in enumerate(unique):
 
         ugriz_hdus = {}
         for filtername in ['u', 'g', 'r', 'i', 'z']:
             print("Downloading %s-band of %s (run=%d,rerun=%d,camcol=%d,field=%d)" % (
                     filtername, objname, run, rerun, camcol, field))
-            hdus = astroquery.sdss.SDSS.get_images(run=run,
-                                            rerun=rerun,
-                                            camcol=camcol,
-                                            field=field,
-                                            band=filtername
-                                            )
+
+            n_retries = 0
+            while(n_retries < n_retry_max):
+                try:
+                    hdus = astroquery.sdss.SDSS.get_images(run=run,
+                                                rerun=rerun,
+                                                camcol=camcol,
+                                                field=field,
+                                                band=filtername
+                                                )
+                    break
+                except:
+                    print("Encountered error, trying again after 1 second")
+                    time.sleep(1)
+                    n_retries += 1
+                    continue
+            if (n_retries >= n_retry_max):
+                print("Unable to get this one, moving on :(")
+                continue
+
             #print(type(hdus), hdus)
             if (not filtername in ugriz_filenames):
                 ugriz_filenames[filtername] = []
