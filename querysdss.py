@@ -81,8 +81,10 @@ if __name__ == "__main__":
     #
     # Create objname directory
     #
+    rawdir = "%s/raw/" % (objname)
     try:
         os.makedirs(objname)
+        os.makedirs(rawdir)
     except:
         pass
 
@@ -131,6 +133,7 @@ if __name__ == "__main__":
     ugriz_filenames = {}
     allfiles = []
     n_retry_max = 5
+
     for pointing, (run,rerun,camcol,field) in enumerate(unique):
 
         ugriz_hdus = {}
@@ -162,9 +165,31 @@ if __name__ == "__main__":
                 ugriz_filenames[filtername] = []
 
             for i, rethdu in enumerate(hdus):
-                del rethdu[1:]
-                #print type(rethdu)
-                out_fn = "%s/%s_%s.%d_%d.raw.fits" % (objname, objname, filtername, pointing, i)
+                #
+                # Each output image has 4 extensions
+                # (see https://data.sdss.org/datamodel/files/BOSS_PHOTOOBJ/frames/RERUN/RUN/CAMCOL/frame.html)
+                # Primary: Image data, sky-subtracted and flux-calibrated (counts are nanomaggies)
+                # Ext 1:   Image, 1-D, with flat-fielding data
+                # Ext 2:   Table-HDU, data to re-interpolate the subtraced 2-D image
+                # Ext 3:   Table-HDU, detailed astrometric data
+                #
+                #
+
+
+                # Ext 1 is a problem here, because swarp (see below) treats it as an image and then
+                # fails to handle it properly. Solution: Convert the ImageHDU to a TableHDU
+                #
+                columns = [fits.Column(name="RESPONSE", format='D', unit='cts/nmgy',
+                                      array=rethdu[1].data[:])]
+                coldefs = fits.ColDefs(columns)
+                flat_tbhdu = fits.BinTableHDU.from_columns(coldefs)
+                rethdu[1] = flat_tbhdu
+
+                #
+                # Now we have a nice FITS image, with a single ImageHDU containing all image data, and a
+                # bunch of TableHDUs that are ignored when running swarp, but still contain all information.
+                #
+                out_fn = "%s/%s_%s.%d_%d.fits" % (rawdir, objname, filtername, pointing, i)
                 rethdu.writeto(out_fn, clobber=True)
                 ugriz_filenames[filtername].append(out_fn)
                 allfiles.append(out_fn)
@@ -205,7 +230,7 @@ if __name__ == "__main__":
     for filtername in ['g', 'r', 'i']:
         allfiles += ugriz_filenames[filtername]
 
-    raw_fn = "%s/%s_gri.raw.fits" % (objname, objname)
+    raw_fn = "%s/%s_gri.fits" % (objname, objname)
     weight_fn = "%s/%s_gri.weight.fits" % (objname, objname)
     gri_fn = "%s/%s_gri.fits" % (objname, objname)
 
@@ -224,7 +249,7 @@ if __name__ == "__main__":
     #
     for filtername in ['g', 'r', 'i']:
 
-        raw_fn = "%s/%s_%s.raw.fits" % (objname, objname, filtername)
+        raw_fn = "%s/%s_%s.fits" % (objname, objname, filtername)
         weight_fn = "%s/%s_%s.weight.fits" % (objname, objname, filtername)
         gri_fn = "%s/%s_%s.fits" % (objname, objname, filtername)
 
