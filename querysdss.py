@@ -19,6 +19,7 @@ import astroquery.sdss
 
 import ephem
 import time
+import numpy
 
 import subprocess
 from optparse import OptionParser
@@ -133,12 +134,28 @@ if __name__ == "__main__":
     # unique run/rerun/camcol/field combos
     #
     combos = []
+    run_rerun_camcol = []
     for i,obj in enumerate(xid):
         combo = (obj['run'], obj['rerun'], obj['camcol'], obj['field'])
         combos.append(combo)
+        run_rerun_camcol.append( (obj['run'], obj['rerun'], obj['camcol']) )
 
     unique = set(combos)
     print(unique)
+
+    #
+    # Make sure to get a complete list of fields to download, even in the case that some
+    # fields for a given run/rerun/camcol are missing (e.g. in the case that the field list
+    # includes fields 71 & 76, but not 72-75
+    #
+    fields = numpy.array(list(unique))
+    exposures = []
+    for run,rerun,camcol in set([tuple(f[:3]) for f in fields]):
+        _this = (fields[:,0] == run) & (fields[:,1] == rerun) & (fields[:,2] == camcol)
+        min_field = numpy.min(fields[:,3][_this])
+        max_field = numpy.max(fields[:,3][_this])
+        for _field in numpy.arange(min_field, max_field+1):
+            exposures.append((run,rerun,camcol,_field))
 
     #
     # Now download the image
@@ -149,15 +166,15 @@ if __name__ == "__main__":
     filters = ['u', 'g', 'r', 'i', 'z']
 
     current_frame = 0
-    for pointing, (run,rerun,camcol,field) in enumerate(unique):
+    for pointing, (run,rerun,camcol,field) in enumerate(exposures):
 
         ugriz_hdus = {}
         for filtername in filters:
             current_frame += 1
 
-            print("Downloading %s-band of %s (run=%d,rerun=%d,camcol=%d,field=%d), pointing %d/%d, frame %d/%d" % (
+            print("Downloading %s-band of %s (run=%d,rerun=%d,camcol=%d,field=%d), pointing %d/%d, file %d/%d" % (
                     filtername, objname, run, rerun, camcol, field,
-                pointing, len(unique), current_frame, len(unique)*len(filters)))
+                pointing+1, len(unique), current_frame, len(unique)*len(filters)))
 
             n_retries = 0
             while(n_retries < n_retry_max):
@@ -263,7 +280,7 @@ if __name__ == "__main__":
     #
     # Now compute de-projected frames for each of the filters
     #
-    for filtername in ['g', 'r', 'i']:
+    for filtername in filters:
 
         raw_fn = "%s/%s_%s.fits" % (objname, objname, filtername)
         weight_fn = "%s/%s_%s.weight.fits" % (objname, objname, filtername)
