@@ -21,10 +21,11 @@ import ephem
 import time
 
 import subprocess
+from optparse import OptionParser
 
 from load_sdss_frame_from_web import *
 
-def stackfiles(imgout, weightout, inputlist, coverage_fn):
+def stackfiles(imgout, weightout, inputlist, coverage_fn, resample_dir="./"):
     #
     # Open the coverage file, find center coordinates and image size
     # this then needs to be propagated to the stack and individual files below
@@ -43,6 +44,7 @@ def stackfiles(imgout, weightout, inputlist, coverage_fn):
         -CENTER_TYPE MANUAL
         -CENTER %(ra)f,%(dec)f
         -IMAGE_SIZE %(sx)d,%(sy)d
+        -RESAMPLE_DIR %(resamp)s
         %(files)s
         """ % {
         'imgout': imgout,
@@ -52,7 +54,7 @@ def stackfiles(imgout, weightout, inputlist, coverage_fn):
         'dec': coverage_hdu[0].header['CRVAL2'],
         'sx': coverage_hdu[0].header['NAXIS1'],
         'sy': coverage_hdu[0].header['NAXIS2'],
-
+        'resamp': resample_dir,
     }
     print(" ".join(swarp_cmd.split()))
     # g = ugriz_hdus['g'][0].data
@@ -78,7 +80,16 @@ def stackfiles(imgout, weightout, inputlist, coverage_fn):
 
 if __name__ == "__main__":
 
-    objname = sys.argv[1]
+    parser = OptionParser()
+    parser.add_option("-r", "--radius", dest="radius",
+                      help="Search radius / Field of view",
+                      default=10., type=float)
+    parser.add_option("", "--resamp", dest="resample_dir",
+                      help="directory for swarp temporary files",
+                        default="./", type=str)
+    (options, cmdline_args) = parser.parse_args()
+
+    objname = cmdline_args[0]
 
     #
     # Create objname directory
@@ -108,8 +119,8 @@ if __name__ == "__main__":
                                           unit=(astropy.units.hourangle, astropy.units.deg))
     print(coords)
 
-
-    search_radius = astropy.coordinates.Angle(10./60, unit=astropy.units.deg)
+    print("Using field-of-view of >= %.2f arcmin"  %(options.radius))
+    search_radius = astropy.coordinates.Angle(options.radius/60, unit=astropy.units.deg)
     xid = astroquery.sdss.SDSS.query_region(coords, radius=search_radius)
 
     print(xid)
@@ -135,13 +146,18 @@ if __name__ == "__main__":
     ugriz_filenames = {}
     allfiles = []
     n_retry_max = 5
+    filters = ['u', 'g', 'r', 'i', 'z']
 
+    current_frame = 0
     for pointing, (run,rerun,camcol,field) in enumerate(unique):
 
         ugriz_hdus = {}
-        for filtername in ['u', 'g', 'r', 'i', 'z']:
-            print("Downloading %s-band of %s (run=%d,rerun=%d,camcol=%d,field=%d)" % (
-                    filtername, objname, run, rerun, camcol, field))
+        for filtername in filters:
+            current_frame += 1
+
+            print("Downloading %s-band of %s (run=%d,rerun=%d,camcol=%d,field=%d), pointing %d/%d, frame %d/%d" % (
+                    filtername, objname, run, rerun, camcol, field,
+                pointing, len(unique), current_frame, len(unique)*len(filters)))
 
             n_retries = 0
             while(n_retries < n_retry_max):
@@ -236,7 +252,8 @@ if __name__ == "__main__":
     stackfiles(imgout=raw_fn,
                weightout=weight_fn,
                inputlist=allfiles,
-               coverage_fn=coverage_fn)
+               coverage_fn=coverage_fn,
+               resample_dir=options.resample_dir)
 
     #
     # Add file headers
