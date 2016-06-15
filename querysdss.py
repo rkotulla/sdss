@@ -22,6 +22,8 @@ import time
 
 import subprocess
 
+from load_sdss_frame_from_web import *
+
 def stackfiles(imgout, weightout, inputlist, coverage_fn):
     #
     # Open the coverage file, find center coordinates and image size
@@ -144,12 +146,19 @@ if __name__ == "__main__":
             n_retries = 0
             while(n_retries < n_retry_max):
                 try:
-                    hdus = astroquery.sdss.SDSS.get_images(run=run,
-                                                rerun=rerun,
-                                                camcol=camcol,
-                                                field=field,
-                                                band=filtername
-                                                )
+                    hdus = get_fits_from_sdss(run=run,
+                                            rerun=rerun,
+                                            camcol=camcol,
+                                            field=field,
+                                            band=filtername,
+                                            ensure_single_imagehdu=True)
+
+                    # hdus = astroquery.sdss.SDSS.get_images(run=run,
+                    #                             rerun=rerun,
+                    #                             camcol=camcol,
+                    #                             field=field,
+                    #                             band=filtername
+                    #                             )
                     break
                 except:
                     print("Encountered error, trying again after 1 second")
@@ -174,16 +183,6 @@ if __name__ == "__main__":
                 # Ext 3:   Table-HDU, detailed astrometric data
                 #
                 #
-
-
-                # Ext 1 is a problem here, because swarp (see below) treats it as an image and then
-                # fails to handle it properly. Solution: Convert the ImageHDU to a TableHDU
-                #
-                columns = [fits.Column(name="RESPONSE", format='D', unit='cts/nmgy',
-                                      array=rethdu[1].data[:])]
-                coldefs = fits.ColDefs(columns)
-                flat_tbhdu = fits.BinTableHDU.from_columns(coldefs)
-                rethdu[1] = flat_tbhdu
 
                 #
                 # Now we have a nice FITS image, with a single ImageHDU containing all image data, and a
@@ -264,10 +263,10 @@ if __name__ == "__main__":
     # - mask all bad pixels (having 0 weights) with NaNs
     #
 
-    print("Deleting file cache")
-    try:
-        os.system("rm -rf /tmp/tmp*")
-    except:
-        pass
+    # print("Deleting file cache")
+    # try:
+    #     os.system("rm -rf /tmp/tmp*")
+    # except:
+    #     pass
 
     print("All done with %s" % (objname))

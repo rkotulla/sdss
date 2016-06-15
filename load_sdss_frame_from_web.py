@@ -4,26 +4,63 @@ import astropy.io.fits as fits
 import urllib2
 import tempfile
 import bz2
+import logging
 
-def get_fits_from_sdss(run, rerun=301, camcol=1, field=1, filter='g'):
+
+def convert_flatfield_to_tablehdu(hdu):
+    #
+    # Each output image has 4 extensions
+    # (see https://data.sdss.org/datamodel/files/BOSS_PHOTOOBJ/frames/RERUN/RUN/CAMCOL/frame.html)
+    # Primary: Image data, sky-subtracted and flux-calibrated (counts are nanomaggies)
+    # Ext 1:   Image, 1-D, with flat-fielding data
+    # Ext 2:   Table-HDU, data to re-interpolate the subtraced 2-D image
+    # Ext 3:   Table-HDU, detailed astrometric data
+    #
+    #
+
+    # Ext 1 is a problem here, because swarp (see below) treats it as an image and then
+    # fails to handle it properly. Solution: Convert the ImageHDU to a TableHDU
+    #
+    columns = [fits.Column(name="RESPONSE", format='D', unit='cts/nmgy',
+                           array=hdu[1].data[:])]
+    coldefs = fits.ColDefs(columns)
+    flat_tbhdu = fits.BinTableHDU.from_columns(coldefs)
+    hdu[1] = flat_tbhdu
+
+    return hdu
+
+
+def get_fits_from_sdss(run, rerun=301, camcol=1, field=1, band='g', ensure_single_imagehdu=False):
+    logger = logging.getLogger('GetFitsFromSDSS')
+
     url = "http://dr12.sdss3.org/sas/dr12/boss/photoObj/frames/%(rerun)3d/%(run)d/%(camcol)d/frame-%(filter)1s-%(run)06d-%(camcol)d-%(field)04d.fits.bz2" % {
         'run': run,
         'rerun': rerun,
         'camcol': camcol,
         'field': field,
-        'filter': filter,
+        'filter': band,
     }
-    print url
-    return openfitsfromweb(url)
+    logger.debug("SDSS image source: %s" % (url))
+    hdu = openfitsfromweb(url)
+
+    if (ensure_single_imagehdu):
+        convert_flatfield_to_tablehdu(hdu)
+
+    return hdu
+
 
 def openfitsfromweb(url):
 
+    logger = logging.getLogger("DownloadFitsFromWeb")
+
     # open the response
+    logger.debug("Querying %s" % (url))
     response = urllib2.urlopen(url)
 
     #
     # Make sure the server reports the response as OK (HTTP code 200)
     #
+    logger.debug("Server responded: %d" % (response.getcode()))
     if (response.getcode() != 200):
         return None
 
@@ -58,5 +95,5 @@ if __name__ == "__main__":
     # url = "http://dr12.sdss3.org/sas/dr12/boss/photoObj/frames/301/4294/5/frame-g-004294-5-0229.fits.bz2"
     # hdu = openfitsfromweb(url)
 
-    hdu = get_fits_from_sdss(run=4294, rerun=301, camcol=5, field=229, filter='g')
+    hdu = get_fits_from_sdss(run=4294, rerun=301, camcol=5, field=229, band='g')
     hdu.info()
