@@ -79,18 +79,8 @@ def stackfiles(imgout, weightout, inputlist, coverage_fn, resample_dir="./"):
     return True
 
 
-if __name__ == "__main__":
 
-    parser = OptionParser()
-    parser.add_option("-r", "--radius", dest="radius",
-                      help="Search radius / Field of view",
-                      default=10., type=float)
-    parser.add_option("", "--resamp", dest="resample_dir",
-                      help="directory for swarp temporary files",
-                        default="./", type=str)
-    (options, cmdline_args) = parser.parse_args()
-
-    objname = cmdline_args[0]
+def query_sdss_object(objname, radius=10., resample_dir="./"):
 
     #
     # Create objname directory
@@ -120,8 +110,8 @@ if __name__ == "__main__":
                                           unit=(astropy.units.hourangle, astropy.units.deg))
     print(coords)
 
-    print("Using field-of-view of >= %.2f arcmin"  %(options.radius))
-    search_radius = astropy.coordinates.Angle(options.radius/60, unit=astropy.units.deg)
+    print("Using field-of-view of >= %.2f arcmin"  %(radius))
+    search_radius = astropy.coordinates.Angle(radius/60, unit=astropy.units.deg)
     xid = astroquery.sdss.SDSS.query_region(coords, radius=search_radius)
 
     print(xid)
@@ -270,7 +260,7 @@ if __name__ == "__main__":
                weightout=weight_fn,
                inputlist=allfiles,
                coverage_fn=coverage_fn,
-               resample_dir=options.resample_dir)
+               resample_dir=resample_dir)
 
     #
     # Add file headers
@@ -304,3 +294,19 @@ if __name__ == "__main__":
     #     pass
 
     print("All done with %s" % (objname))
+
+
+if __name__ == "__main__":
+
+    parser = OptionParser()
+    parser.add_option("-r", "--radius", dest="radius",
+                      help="Search radius / Field of view",
+                      default=10., type=float)
+    parser.add_option("", "--resamp", dest="resample_dir",
+                      help="directory for swarp temporary files",
+                        default="./", type=str)
+    (options, cmdline_args) = parser.parse_args()
+
+    objname = cmdline_args[0]
+
+    query_sdss_object(objname=objname, radius=options.radius, resample_dir=options.resample_dir)
