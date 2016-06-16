@@ -24,6 +24,10 @@ import numpy
 import subprocess
 from optparse import OptionParser
 
+# for parallel data downloads
+import threading
+import Queue
+
 from load_sdss_frame_from_web import *
 
 def stackfiles(imgout, weightout, inputlist, coverage_fn, resample_dir="./"):
@@ -78,6 +82,80 @@ def stackfiles(imgout, weightout, inputlist, coverage_fn, resample_dir="./"):
 
     return True
 
+
+class SDSS_Downloader(threading.Thread):
+
+    def __init__(self, queue, rawdir, ugriz_filenames={}, allfiles=[], n_retry_max=5):
+        self.queue = queue
+        self.n_retry_max=n_retry_max
+        self.ugriz_filenames = ugriz_filenames
+        self.allfiles = allfiles
+        self.rawdir = rawdir
+        self.done = False
+        threading.Thread.__init__(self)
+
+    def run(self):
+
+        while (True):
+            try:
+                job = self.queue.get_nowait()
+            except Queue.Empty:
+                # nothing left to do
+                break
+
+            (run,rerun,camcol,field,filtername,pointing,ensure_single) = job
+            #print job
+            #continue
+
+            print("Downloading pointing %d, filter %s (run=%d,rerun=%d,camcol=%d,field=%d)" % (
+                pointing, filtername, run, rerun, camcol, field))
+
+            n_retries = 0
+            while(n_retries < self.n_retry_max or n_retries==0):
+                try:
+                    rethdu = get_fits_from_sdss(run=run,
+                                              rerun=rerun,
+                                              camcol=camcol,
+                                              field=field,
+                                              band=filtername,
+                                              ensure_single_imagehdu=True)
+
+                    # hdus = astroquery.sdss.SDSS.get_images(run=run,
+                    #                             rerun=rerun,
+                    #                             camcol=camcol,
+                    #                             field=field,
+                    #                             band=filtername
+                    #                             )
+                    break
+                except:
+                    print("Encountered error, trying again after 1 second")
+                    time.sleep(1)
+                    n_retries += 1
+                    continue
+            if (n_retries >= self.n_retry_max):
+                print("Unable to get this one, moving on :(")
+                continue
+
+            # print(type(hdus), hdus)
+            if (not filtername in self.ugriz_filenames):
+                self.ugriz_filenames[filtername] = []
+
+            #
+            # Now we have a nice FITS image, with a single ImageHDU containing all image data, and a
+            # bunch of TableHDUs that are ignored when running swarp, but still contain all information.
+            #
+            out_fn = "%s/%s_%s.%03d.fits" % (self.rawdir, objname, filtername, pointing)
+            rethdu.writeto(out_fn, clobber=True)
+            self.ugriz_filenames[filtername].append(out_fn)
+            self.allfiles.append(out_fn)
+
+        self.done = True
+        print("download worker shutting down")
+
+    def wait(self):
+        while (not self.done):
+            time.sleep(0.1)
+        return
 
 
 def query_sdss_object(objname, radius=10., resample_dir="./", parallel=False):
@@ -155,6 +233,9 @@ def query_sdss_object(objname, radius=10., resample_dir="./", parallel=False):
     n_retry_max = 5
     filters = ['u', 'g', 'r', 'i', 'z']
 
+    # Setup a download queue that we can work done in parallel
+    download_queue = Queue.Queue()
+
     current_frame = 0
     for pointing, (run,rerun,camcol,field) in enumerate(exposures):
 
@@ -162,61 +243,82 @@ def query_sdss_object(objname, radius=10., resample_dir="./", parallel=False):
         for filtername in filters:
             current_frame += 1
 
-            print("Downloading %s-band of %s (run=%d,rerun=%d,camcol=%d,field=%d), pointing %d/%d, file %d/%d" % (
-                    filtername, objname, run, rerun, camcol, field,
-                pointing+1, len(exposures), current_frame, len(exposures)*len(filters)))
+            if (not parallel):
+                print("Downloading %s-band of %s (run=%d,rerun=%d,camcol=%d,field=%d), pointing %d/%d, file %d/%d" % (
+                        filtername, objname, run, rerun, camcol, field,
+                    pointing+1, len(exposures), current_frame, len(exposures)*len(filters)))
 
-            n_retries = 0
-            while(n_retries < n_retry_max):
-                try:
-                    hdus = get_fits_from_sdss(run=run,
-                                            rerun=rerun,
-                                            camcol=camcol,
-                                            field=field,
-                                            band=filtername,
-                                            ensure_single_imagehdu=True)
+                n_retries = 0
+                while(n_retries < n_retry_max):
+                    try:
+                        hdus = get_fits_from_sdss(run=run,
+                                                rerun=rerun,
+                                                camcol=camcol,
+                                                field=field,
+                                                band=filtername,
+                                                ensure_single_imagehdu=True)
 
-                    # hdus = astroquery.sdss.SDSS.get_images(run=run,
-                    #                             rerun=rerun,
-                    #                             camcol=camcol,
-                    #                             field=field,
-                    #                             band=filtername
-                    #                             )
-                    break
-                except:
-                    print("Encountered error, trying again after 1 second")
-                    time.sleep(1)
-                    n_retries += 1
+                        # hdus = astroquery.sdss.SDSS.get_images(run=run,
+                        #                             rerun=rerun,
+                        #                             camcol=camcol,
+                        #                             field=field,
+                        #                             band=filtername
+                        #                             )
+                        break
+                    except:
+                        print("Encountered error, trying again after 1 second")
+                        time.sleep(1)
+                        n_retries += 1
+                        continue
+                if (n_retries >= n_retry_max):
+                    print("Unable to get this one, moving on :(")
                     continue
-            if (n_retries >= n_retry_max):
-                print("Unable to get this one, moving on :(")
-                continue
 
-            #print(type(hdus), hdus)
-            if (not filtername in ugriz_filenames):
-                ugriz_filenames[filtername] = []
+                #print(type(hdus), hdus)
+                if (not filtername in ugriz_filenames):
+                    ugriz_filenames[filtername] = []
 
-            for i, rethdu in enumerate(hdus):
-                #
-                # Each output image has 4 extensions
-                # (see https://data.sdss.org/datamodel/files/BOSS_PHOTOOBJ/frames/RERUN/RUN/CAMCOL/frame.html)
-                # Primary: Image data, sky-subtracted and flux-calibrated (counts are nanomaggies)
-                # Ext 1:   Image, 1-D, with flat-fielding data
-                # Ext 2:   Table-HDU, data to re-interpolate the subtraced 2-D image
-                # Ext 3:   Table-HDU, detailed astrometric data
-                #
-                #
+                for i, rethdu in enumerate(hdus):
+                    #
+                    # Each output image has 4 extensions
+                    # (see https://data.sdss.org/datamodel/files/BOSS_PHOTOOBJ/frames/RERUN/RUN/CAMCOL/frame.html)
+                    # Primary: Image data, sky-subtracted and flux-calibrated (counts are nanomaggies)
+                    # Ext 1:   Image, 1-D, with flat-fielding data
+                    # Ext 2:   Table-HDU, data to re-interpolate the subtraced 2-D image
+                    # Ext 3:   Table-HDU, detailed astrometric data
+                    #
+                    #
 
-                #
-                # Now we have a nice FITS image, with a single ImageHDU containing all image data, and a
-                # bunch of TableHDUs that are ignored when running swarp, but still contain all information.
-                #
-                out_fn = "%s/%s_%s.%d_%d.fits" % (rawdir, objname, filtername, pointing, i)
-                rethdu.writeto(out_fn, clobber=True)
-                ugriz_filenames[filtername].append(out_fn)
-                allfiles.append(out_fn)
+                    #
+                    # Now we have a nice FITS image, with a single ImageHDU containing all image data, and a
+                    # bunch of TableHDUs that are ignored when running swarp, but still contain all information.
+                    #
+                    out_fn = "%s/%s_%s.%d_%d.fits" % (rawdir, objname, filtername, pointing, i)
+                    rethdu.writeto(out_fn, clobber=True)
+                    ugriz_filenames[filtername].append(out_fn)
+                    allfiles.append(out_fn)
 
-            ugriz_hdus[filtername] = hdus[0]
+                ugriz_hdus[filtername] = hdus[0]
+
+            else:
+                # This is what we do to download frames in parallel
+                download_queue.put((run,rerun,camcol,field,filtername,pointing,True))
+
+    if (parallel):
+        # For parallel processing, start the worker threads
+        downloaders = []
+        for n_threads in range(5):
+            t = SDSS_Downloader(queue=download_queue,
+                                rawdir=rawdir,
+                                ugriz_filenames=ugriz_filenames,
+                                allfiles=allfiles)
+            t.daemon=True
+            t.start()
+            downloaders.append(t)
+        # Now all workers are busy
+        for t in downloaders:
+            t.wait()
+        # Now all workers are done with their work
 
     #
     # Combine the gri bands for better S/N
@@ -261,11 +363,6 @@ def query_sdss_object(objname, radius=10., resample_dir="./", parallel=False):
                inputlist=allfiles,
                coverage_fn=coverage_fn,
                resample_dir=resample_dir)
-
-    #
-    # Add file headers
-    #
-
 
     #
     # Now compute de-projected frames for each of the filters
