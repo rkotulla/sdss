@@ -43,6 +43,12 @@ def get_fits_from_sdss(run, rerun=301, camcol=1, field=1, band='g', ensure_singl
     logger.debug("SDSS image source: %s" % (url))
     hdu = openfitsfromweb(url)
 
+    hdu[0].header['Q_RUN'] = (run, "run")
+    hdu[0].header['Q_RERUN'] = (rerun, "rerun")
+    hdu[0].header['Q_CAMCOL'] = (camcol, "camcol")
+    hdu[0].header['Q_FIELD'] = (field, "field")
+    hdu[0].header['Q_URL'] = (url, "download url")
+
     if (ensure_single_imagehdu):
         convert_flatfield_to_tablehdu(hdu)
 
