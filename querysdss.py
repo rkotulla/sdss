@@ -422,6 +422,7 @@ if __name__ == "__main__":
     for objname in objects:
         if (os.path.isdir(objname)):
             print "Object %s exists, skipping" % (objname)
+            continue
         try:
             query_sdss_object(objname=objname,
                       radius=options.radius,
