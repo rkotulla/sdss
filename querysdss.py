@@ -307,7 +307,7 @@ def query_sdss_object(objname, radius=10., resample_dir="./", parallel=False):
     if (parallel):
         # For parallel processing, start the worker threads
         downloaders = []
-        for n_threads in range(5):
+        for n_threads in range(15):
             t = SDSS_Downloader(queue=download_queue,
                                 rawdir=rawdir,
                                 ugriz_filenames=ugriz_filenames,
@@ -407,9 +407,19 @@ if __name__ == "__main__":
                       default=False, action='store_true')
     (options, cmdline_args) = parser.parse_args()
 
-    objname = cmdline_args[0]
+    if (os.path.isfile(cmdline_args[0])):
+        # Read target names from file
+        with open(cmdline_args[0], 'r') as listfile:
+            objects = [l.strip() for l in listfile.readlines()]
+    else:
+        # Take one or more object names from command line
+        objects = cmdline_args[0:]
 
-    query_sdss_object(objname=objname,
+    #
+    # Now download all files, one after the other
+    #
+    for objname in objects:
+        query_sdss_object(objname=objname,
                       radius=options.radius,
                       resample_dir=options.resample_dir,
                       parallel=options.parallel)
