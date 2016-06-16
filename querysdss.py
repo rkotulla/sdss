@@ -80,7 +80,7 @@ def stackfiles(imgout, weightout, inputlist, coverage_fn, resample_dir="./"):
 
 
 
-def query_sdss_object(objname, radius=10., resample_dir="./"):
+def query_sdss_object(objname, radius=10., resample_dir="./", parallel=False):
 
     #
     # Create objname directory
@@ -164,7 +164,7 @@ def query_sdss_object(objname, radius=10., resample_dir="./"):
 
             print("Downloading %s-band of %s (run=%d,rerun=%d,camcol=%d,field=%d), pointing %d/%d, file %d/%d" % (
                     filtername, objname, run, rerun, camcol, field,
-                pointing+1, len(unique), current_frame, len(unique)*len(filters)))
+                pointing+1, len(exposures), current_frame, len(exposures)*len(filters)))
 
             n_retries = 0
             while(n_retries < n_retry_max):
@@ -305,8 +305,14 @@ if __name__ == "__main__":
     parser.add_option("", "--resamp", dest="resample_dir",
                       help="directory for swarp temporary files",
                         default="./", type=str)
+    parser.add_option("-p", "--parallel", dest="parallel",
+                      help="Download all files for a given object in parallel",
+                      default=False, action='store_true')
     (options, cmdline_args) = parser.parse_args()
 
     objname = cmdline_args[0]
 
-    query_sdss_object(objname=objname, radius=options.radius, resample_dir=options.resample_dir)
+    query_sdss_object(objname=objname,
+                      radius=options.radius,
+                      resample_dir=options.resample_dir,
+                      parallel=options.parallel)
