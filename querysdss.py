@@ -428,6 +428,8 @@ if __name__ == "__main__":
                       radius=options.radius,
                       resample_dir=options.resample_dir,
                       parallel=options.parallel)
+        except KeyboardInterrupt, SystemError, SystemExit:
+            raise
         except:
             error_fn = "%s.error" % (objname)
             etype, error, stackpos = sys.exc_info()
