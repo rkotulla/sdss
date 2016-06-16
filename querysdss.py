@@ -27,6 +27,7 @@ from optparse import OptionParser
 # for parallel data downloads
 import threading
 import Queue
+import traceback
 
 from load_sdss_frame_from_web import *
 
@@ -419,7 +420,25 @@ if __name__ == "__main__":
     # Now download all files, one after the other
     #
     for objname in objects:
-        query_sdss_object(objname=objname,
+        if (os.path.isdir(objname)):
+            print "Object %s exists, skipping" % (objname)
+        try:
+            query_sdss_object(objname=objname,
                       radius=options.radius,
                       resample_dir=options.resample_dir,
                       parallel=options.parallel)
+        except:
+            error_fn = "%s.error" % (objname)
+            etype, error, stackpos = sys.exc_info()
+
+            exception_string = ["\n",
+                        "=========== EXCEPTION ==============",
+                        "etype: %s" % (str(etype)),
+                        "error: %s" % (str(error)),
+                        "stackpos: %s" % (str(stackpos)),
+                        "---\n",
+                        traceback.format_exc(),
+                        "--- end\n"
+            ]
+            with open(error_fn, "w") as err:
+                err.writelines(exception_string)
