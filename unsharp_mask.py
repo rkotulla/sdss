@@ -101,10 +101,10 @@ if __name__ == "__main__":
 
         for i_size, size in enumerate(sizes):
             hdulist[0].data = smoothed[i_size]
-            hdulist.writeto("%s.smooth.%s__%0.1f.fits" % (infile[:-5], options.mode, size), clobber=True)
+            hdulist.writeto("%s.smooth.%s__%05.1f.fits" % (infile[:-5], options.mode, size), clobber=True)
 
             hdulist_median[0].data = filtered[i_size]
-            hdulist_median.writeto("%s.filtered.%s_%0.1f.fits" % (infile[:-5], options.mode, size), clobber=True)
+            hdulist_median.writeto("%s.filtered.%s_%05.1f.fits" % (infile[:-5], options.mode, size), clobber=True)
 
 
 
