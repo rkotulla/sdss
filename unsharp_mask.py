@@ -23,7 +23,7 @@ def unsharp_mask(data, sizes=[5], mode='median'):
         if (mode == 'median'):
             smoothed = scipy.ndimage.filters.median_filter(
                 input=data.astype(numpy.float),
-                size=options.size,
+                size=int(numpy.round(size,0)),
                 output=None, mode='constant', cval=0.0
                 )
         elif (mode == 'gauss'):
