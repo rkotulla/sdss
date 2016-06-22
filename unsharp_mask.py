@@ -57,6 +57,8 @@ if __name__ == "__main__":
     sizes = [float(d) for d in options.size.split(",")]
     for infile in filenames: #sys.argv[1:]:
 
+        print "Working on %s" % (infile)
+    
         hdulist = pyfits.open(infile)
         hdulist_median = pyfits.open(infile)
 
