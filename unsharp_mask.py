@@ -58,7 +58,7 @@ if __name__ == "__main__":
     for infile in filenames: #sys.argv[1:]:
 
         print "Working on %s" % (infile)
-    
+
         hdulist = pyfits.open(infile)
         hdulist_median = pyfits.open(infile)
 
@@ -99,15 +99,23 @@ if __name__ == "__main__":
         #     hdulist_median[i].data = median
         #
 
-        smoothed, filtered = unsharp_mask(data=hdulist[0].data, mode=options.mode, sizes=sizes)
+        try:
+            smoothed, filtered = unsharp_mask(data=hdulist[0].data, mode=options.mode, sizes=sizes)
 
-        for i_size, size in enumerate(sizes):
-            hdulist[0].data = smoothed[i_size]
-            hdulist.writeto("%s.smooth.%s__%05.1f.fits" % (infile[:-5], options.mode, size), clobber=True)
+            for i_size, size in enumerate(sizes):
+                hdulist[0].data = smoothed[i_size]
+                hdulist[0].header['UM_MODE'] = options.mode
+                hdulist[0].header['UM_SIZE'] = size
+                hdulist.writeto("%s.smooth.%s__%05.1f.fits" % (infile[:-5], options.mode, size), clobber=True)
 
-            hdulist_median[0].data = filtered[i_size]
-            hdulist_median.writeto("%s.filtered.%s_%05.1f.fits" % (infile[:-5], options.mode, size), clobber=True)
-
+                hdulist_median[0].data = filtered[i_size]
+                hdulist_median[0].header['UM_MODE'] = options.mode
+                hdulist_median[0].header['UM_SIZE'] = size
+                hdulist_median.writeto("%s.filtered.%s_%05.1f.fits" % (infile[:-5], options.mode, size), clobber=True)
+        except (KeyboardInterrupt, SystemError, SystemExit):
+            raise
+        except:
+            print "There was a problem processing %s" % (infile)
 
 
         
