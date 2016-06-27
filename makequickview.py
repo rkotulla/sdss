@@ -2,6 +2,8 @@
 
 
 import astropy.io.fits as fits
+import astropy.wcs
+
 import numpy
 import os, sys
 
@@ -9,9 +11,13 @@ from PIL import Image, ImageFont, ImageDraw
 #import Image
 from optparse import OptionParser
 
+from astropy import units as u
+import astropy
+import astropy.nddata
+
 print Image.SAVE
 
-def make_image(img_fn, weight_fn, output_fn):
+def make_image(img_fn, weight_fn, output_fn, cutout=None, min_max=None):
 
     hdulist = fits.open(img_fn)
     data = hdulist[0].data
@@ -30,22 +36,39 @@ def make_image(img_fn, weight_fn, output_fn):
 
     good_data = weight_map > 0
 
-    for iteration in range(3):
-        qs = numpy.nanpercentile(data[good_data], q=[16, 50, 84])
+    ####
+    if (not cutout == None):
+        ra,dec,size = cutout
+        wcs = astropy.wcs.WCS(header=hdulist[0].header)
+        x,y = wcs.all_world2pix(ra,dec,0)
+        print x,y
+        # position = (49.7, 100.1)
+        # size = (40, 50)  # pixels
+        # cutout = astropy.nddata.Cutout2D(data, position, size)
 
-        _median = qs[1]
-        _sigma = (qs[2] - qs[0]) / 2.
-        _mingood = _median - 3 * _sigma
-        _maxgood = _median + 3 * _sigma
-        good_data[(data < _mingood) | (data > _maxgood)] = False
+        _x = int(x)
+        _y = int(y)
+        data = data[_y-500:_y+500, _x-500:_x+500]
 
-        print iteration, _median, _sigma, _mingood, _maxgood
+    if (min_max == None):
+        for iteration in range(3):
+            qs = numpy.nanpercentile(data[good_data], q=[16, 50, 84])
 
-    #
-    # Good cuts are from -5sigma - 5*sigma
-    #
-    min_level = _median - 5 * _sigma
-    max_level = _median + 5 * _sigma
+            _median = qs[1]
+            _sigma = (qs[2] - qs[0]) / 2.
+            _mingood = _median - 3 * _sigma
+            _maxgood = _median + 3 * _sigma
+            good_data[(data < _mingood) | (data > _maxgood)] = False
+
+            print iteration, _median, _sigma, _mingood, _maxgood
+
+        #
+        # Good cuts are from -5sigma - 5*sigma
+        #
+        min_level = _median - 5 * _sigma
+        max_level = _median + 5 * _sigma
+    else:
+        min_level, max_level = min_max
 
     greyscale = (data - min_level) / (max_level - min_level)
     greyscale[greyscale < 0] = 0
@@ -57,7 +80,7 @@ def make_image(img_fn, weight_fn, output_fn):
     image.save(output_fn, "PNG")
     del image
 
-    return
+    return (min_level, max_level)
 
 if __name__ == "__main__":
 
