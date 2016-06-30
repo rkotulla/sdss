@@ -40,9 +40,11 @@ if __name__ == "__main__":
         _, bn = os.path.split(outfile)
         _, cropbn = os.path.split(crop_outfile)
         if (not os.path.isfile(outfile)):
-            min_max = makequickview.make_image(fn, weight_fn, outfile, nsigma=[-2,+20])
+            min_max = makequickview.make_image(fn, weight_fn, outfile, nsigma=[-15,+100],
+                                     scale='arcsinh')
             makequickview.make_image(fn, weight_fn=weight_fn, output_fn=crop_outfile,
-                                     cutout=(ra, dec, 5, coord), min_max=min_max)
+                                     cutout=(ra, dec, 5, coord), min_max=min_max,
+                                     scale='arcsinh')
         print >>index_file, """
             <p>%(o)s - gri stack<br>
             full frame: <a href='%(ff)s'>%(ff)s</a><br>

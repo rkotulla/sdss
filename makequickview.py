@@ -18,7 +18,7 @@ import astropy.nddata
 
 print Image.SAVE
 
-def make_image(img_fn, weight_fn, output_fn, cutout=None, min_max=None, nsigma=[-5,+5]):
+def make_image(img_fn, weight_fn, output_fn, cutout=None, min_max=None, nsigma=[-5,+5], scale='linear'):
 
     hdulist = fits.open(img_fn)
     data = hdulist[0].data
@@ -41,10 +41,10 @@ def make_image(img_fn, weight_fn, output_fn, cutout=None, min_max=None, nsigma=[
     if (not cutout == None):
         print "prepping cutout", cutout
         ra,dec,size,coord = cutout
-        print math.degrees(float(ra)), math.degrees(float(dec))
-        print hdulist[0].header
+        #print math.degrees(float(ra)), math.degrees(float(dec))
+        #print hdulist[0].header
         wcs = astropy.wcs.WCS(header=hdulist[0].header)
-        print wcs
+        #print wcs
         ra,dec = math.degrees(float(ra)), math.degrees(float(dec))
         #ra,dec = coord
         x,y = wcs.all_world2pix(ra,dec,0)
@@ -72,14 +72,25 @@ def make_image(img_fn, weight_fn, output_fn, cutout=None, min_max=None, nsigma=[
         #
         # Good cuts are from -5sigma - 5*sigma
         #
+        print nsigma
         min_level = _median + nsigma[0] * _sigma
         max_level = _median + nsigma[1] * _sigma
     else:
         min_level, max_level = min_max
 
+    print min_level, max_level
     greyscale = (data - min_level) / (max_level - min_level)
-    greyscale[greyscale < 0] = 0
-    greyscale[greyscale >= 1] = 1
+
+    if (scale == "arcsinh"):
+        print "Applying arcsinh contrast adjustment"
+        #greyscale = greyscale / 10.
+        numpy.arcsinh(greyscale,out=greyscale) / numpy.arcsinh(1.)
+        #greyscale = numpy.log10(greyscale)  # / numpy.arcsinh(1.)
+
+
+    greyscale[greyscale < 0.] = 0.
+    greyscale[greyscale >= 1.] = 1.
+
 
     print output_fn
     image = Image.fromarray(numpy.uint8(greyscale * 255))
