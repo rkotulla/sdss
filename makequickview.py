@@ -17,7 +17,7 @@ import astropy.nddata
 
 print Image.SAVE
 
-def make_image(img_fn, weight_fn, output_fn, cutout=None, min_max=None):
+def make_image(img_fn, weight_fn, output_fn, cutout=None, min_max=None, nsigma=[-5,+5]):
 
     hdulist = fits.open(img_fn)
     data = hdulist[0].data
@@ -65,8 +65,8 @@ def make_image(img_fn, weight_fn, output_fn, cutout=None, min_max=None):
         #
         # Good cuts are from -5sigma - 5*sigma
         #
-        min_level = _median - 5 * _sigma
-        max_level = _median + 5 * _sigma
+        min_level = _median + nsigma[0] * _sigma
+        max_level = _median + nsigma[1] * _sigma
     else:
         min_level, max_level = min_max
 

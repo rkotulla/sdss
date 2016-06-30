@@ -13,20 +13,17 @@ if __name__ == "__main__":
     objname = sys.argv[1]
 
     # get ra/dec from name
-    #_, (ra, dec) = querysdss.resolve_name_to_radec(objname)
-    #print ra, dec
-    ra,dec = 148.97195, 69.68075
+    _, (ra, dec) = querysdss.resolve_name_to_radec(objname)
+    print ra, dec
+    #ra,dec = 148.97195, 69.68075
     coord = astropy.coordinates.SkyCoord(ra, dec, frame='icrs',
                                           unit=(astropy.units.hourangle, astropy.units.deg))
 
 
     print ra, dec
 
-    fn_template = "%s/%s_gri.filtered.*.fits" % (objname, objname)
-    print fn_template
-
-    fns = glob.glob(fn_template)
     weight_fn = glob.glob("%s/%s_gri.weight.fits" % (objname, objname))[0]
+    gri = "%s/%s_gri.fits" % (objname, objname)
 
     print fns
 
@@ -35,16 +32,37 @@ if __name__ == "__main__":
     with open(index_fn, "w") as index_file:
         print >>index_file, "<html><body>"
 
-        for fn in fns:
+        #
+        # Add the GRI stack
+        #
+
+        #
+        # Add the g/r/i image as 3-color image
+        #
+
+        #
+        # Now add all unsharp-masked frames
+        #
+        fn_template = "%s/%s_gri.filtered.*.fits" % (objname, objname)
+        fns = glob.glob(fn_template)
+        for i_fn, fn in enumerate(fns):
             hdulist = fits.open(fn)
-            um_mode = hdulist[0].header["UM_MODE"]
-            um_size = hdulist[0].header["UM_SIZE"]
+
+            nsigma = [-5,+5]
+            try:
+                um_mode = hdulist[0].header["UM_MODE"]
+                um_size = hdulist[0].header["UM_SIZE"]
+            except:
+                um_mode, um_size = "GRI", -1
+                nsigma = [-2,+15]
+
             outfile = fn[:-5]+".png"
             crop_outfile = fn[:-5]+".crop.png"
             _, bn = os.path.split(outfile)
             _, cropbn = os.path.split(crop_outfile)
+
             if (not os.path.isfile(outfile)):
-                min_max = makequickview.make_image(fn, weight_fn, outfile)
+                min_max = makequickview.make_image(fn, weight_fn, outfile, nsigma=nsigma)
                 makequickview.make_image(fn, weight_fn=weight_fn, output_fn=crop_outfile,
                                          cutout=(ra,dec,5), min_max=min_max)
 

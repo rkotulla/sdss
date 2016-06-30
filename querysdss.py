@@ -159,19 +159,12 @@ class SDSS_Downloader(threading.Thread):
         return
 
 
-def query_sdss_object(objname, radius=10., resample_dir="./", parallel=False):
+def resolve_name_to_radec(objname):
 
-    #
-    # Create objname directory
-    #
-    rawdir = "%s/raw/" % (objname)
     try:
-        os.makedirs(objname)
-        os.makedirs(rawdir)
+        results = Simbad.query_object(objname)
     except:
-        pass
-
-    results = Simbad.query_object(objname)
+        return None, (-1,-1)
 
     print(results[0][1])
     print(results[0][2])
@@ -188,6 +181,25 @@ def query_sdss_object(objname, radius=10., resample_dir="./", parallel=False):
     coords = astropy.coordinates.SkyCoord(results[0][1], results[0][2], frame='icrs',
                                           unit=(astropy.units.hourangle, astropy.units.deg))
     print(coords)
+
+    return coords, (e.ra, e.dec)
+
+def query_sdss_object(objname, radius=10., resample_dir="./", parallel=False):
+
+    #
+    # Create objname directory
+    #
+    rawdir = "%s/raw/" % (objname)
+    try:
+        os.makedirs(objname)
+        os.makedirs(rawdir)
+    except:
+        pass
+
+    #
+    # Resolve the object name using simbad
+    #
+    coords, _ = resolve_name_to_radec(objname=objname)
 
     print("Using field-of-view of >= %.2f arcmin"  %(radius))
     search_radius = astropy.coordinates.Angle(radius/60, unit=astropy.units.deg)
