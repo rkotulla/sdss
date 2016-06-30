@@ -52,6 +52,9 @@ if __name__ == "__main__":
     parser.add_option("-m", "--mode", dest="mode",
                       help="mode (gauss/median)",
                       default="median", type=str)
+    parser.add_option("-n", "--nosmooth", dest="smooth",
+                      help="disable output of the smoothed files",
+                      action="store_false")
     (options, filenames) = parser.parse_args()
 
     sizes = [float(d) for d in options.size.split(",")]
@@ -103,10 +106,11 @@ if __name__ == "__main__":
             smoothed, filtered = unsharp_mask(data=hdulist[0].data, mode=options.mode, sizes=sizes)
 
             for i_size, size in enumerate(sizes):
-                hdulist[0].data = smoothed[i_size]
-                hdulist[0].header['UM_MODE'] = options.mode
-                hdulist[0].header['UM_SIZE'] = size
-                hdulist.writeto("%s.smooth.%s__%05.1f.fits" % (infile[:-5], options.mode, size), clobber=True)
+                if (options.smooth):
+                    hdulist[0].data = smoothed[i_size]
+                    hdulist[0].header['UM_MODE'] = options.mode
+                    hdulist[0].header['UM_SIZE'] = size
+                    hdulist.writeto("%s.smooth.%s__%05.1f.fits" % (infile[:-5], options.mode, size), clobber=True)
 
                 hdulist_median[0].data = filtered[i_size]
                 hdulist_median[0].header['UM_MODE'] = options.mode
