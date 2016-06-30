@@ -19,13 +19,12 @@ if __name__ == "__main__":
     coord = astropy.coordinates.SkyCoord(ra, dec, frame='icrs',
                                           unit=(astropy.units.hourangle, astropy.units.deg))
 
-
-    print ra, dec
+    print coord, ra, dec
 
     weight_fn = glob.glob("%s/%s_gri.weight.fits" % (objname, objname))[0]
     gri = "%s/%s_gri.fits" % (objname, objname)
 
-    print fns
+    #print fns
 
     index_fn = "%s/index.html" % (objname)
 
