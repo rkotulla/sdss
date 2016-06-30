@@ -40,12 +40,13 @@ def make_image(img_fn, weight_fn, output_fn, cutout=None, min_max=None, nsigma=[
     ####
     if (not cutout == None):
         print "prepping cutout", cutout
-        ra,dec,size = cutout
+        ra,dec,size,coord = cutout
         print math.degrees(float(ra)), math.degrees(float(dec))
         print hdulist[0].header
         wcs = astropy.wcs.WCS(header=hdulist[0].header)
         print wcs
         ra,dec = math.degrees(float(ra)), math.degrees(float(dec))
+        #ra,dec = coord
         x,y = wcs.all_world2pix(ra,dec,0)
         print ra, dec, "-->", x,y
         # position = (49.7, 100.1)
