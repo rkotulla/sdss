@@ -62,38 +62,46 @@ if __name__ == "__main__":
         #
         # Now add all unsharp-masked frames
         #
-        fn_template = "%s/%s_gri.filtered.*.fits" % (objname, objname)
-        fns = glob.glob(fn_template)
-        for i_fn, fn in enumerate(fns):
-            hdulist = fits.open(fn)
+        for mode in ['gauss', 'median']:
+            fn_template = "%s/%s_gri.filtered.%s_*.fits" % (objname, objname, mode)
+            print fn_template
 
-            nsigma = [-5,+5]
-            try:
+            fns = glob.glob(fn_template)
+            um_sizes = numpy.zeros((len(fns)))
+
+            for i_fn, fn in enumerate(fns):
+                hdulist = fits.open(fn)
+                um_size = hdulist[0].header["UM_SIZE"]
+                um_sizes[i_fn] = um_size
+            si = numpy.argsort(um_sizes)
+            fns_sorted = numpy.array(fns)[si]
+            print fns
+            for i_fn, fn in enumerate(fns_sorted):
+                hdulist = fits.open(fn)
+
+                nsigma = [-5, +5]
                 um_mode = hdulist[0].header["UM_MODE"]
                 um_size = hdulist[0].header["UM_SIZE"]
-            except:
-                um_mode, um_size = "GRI", -1
-                nsigma = [-2,+15]
+                um_sizes[i_fn] = um_size
+                outfile = fn[:-5]+".png"
+                crop_outfile = fn[:-5]+".crop.png"
+                _, bn = os.path.split(outfile)
+                _, cropbn = os.path.split(crop_outfile)
 
-            outfile = fn[:-5]+".png"
-            crop_outfile = fn[:-5]+".crop.png"
-            _, bn = os.path.split(outfile)
-            _, cropbn = os.path.split(crop_outfile)
+                if (not os.path.isfile(outfile)):
+                    min_max = makequickview.make_image(fn, weight_fn, outfile, nsigma=nsigma)
+                    makequickview.make_image(fn, weight_fn=weight_fn, output_fn=crop_outfile,
+                                             cutout=(ra,dec,5,coord), min_max=min_max)
 
-            if (not os.path.isfile(outfile)):
-                min_max = makequickview.make_image(fn, weight_fn, outfile, nsigma=nsigma)
-                makequickview.make_image(fn, weight_fn=weight_fn, output_fn=crop_outfile,
-                                         cutout=(ra,dec,5,coord), min_max=min_max)
-
-            print >>index_file, """
-            <p>%(o)s - %(m)s @ %(s).1f pixels<br>
-            full frame: <a href='%(ff)s'>%(ff)s</a><br>
-            <a href='%(cf)s'><img src='%(cf)s' style='width:500;'</img></a></p>
-            """ % {
-                'cf': cropbn,
-                'ff': bn,
-                'o': objname,
-                'm': um_mode,
-                's': um_size,
-            }
+                print >>index_file, """
+                <p>%(o)s - %(m)s @ %(s).1f pixels<br>
+                full frame: <a href='%(ff)s'>%(ff)s</a><br>
+                <a href='%(cf)s'><img src='%(cf)s' style='width:500;'</img></a></p>
+                """ % {
+                    'cf': cropbn,
+                    'ff': bn,
+                    'o': objname,
+                    'm': um_mode,
+                    's': um_size,
+                }
         print >>index_file, "</body></html>"
