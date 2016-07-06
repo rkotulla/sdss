@@ -20,7 +20,11 @@ def create_quick_view(objname):
 
     print coord, ra, dec
 
-    weight_fn = glob.glob("%s/%s_gri.weight.fits" % (objname, objname))[0]
+    weight_list = glob.glob("%s/%s_gri.weight.fits" % (objname, objname))
+    if (len(weight_list) <= 0):
+        print "Unable to find weight image, skipping processing"
+        return
+    weight_fn = weight_list[0]
     gri = "%s/%s_gri.fits" % (objname, objname)
 
     #print fns
