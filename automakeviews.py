@@ -92,7 +92,7 @@ def create_quick_view(objname):
 
             for i_fn, fn in enumerate(fns):
                 hdulist = fits.open(fn)
-                um_size = hdulist[0].header["UM_SIZE"]
+                um_size = -1 if not "UM_SIZE" in hdulist[0].header else hdulist[0].header["UM_SIZE"]
                 um_sizes[i_fn] = um_size
             si = numpy.argsort(um_sizes)
             fns_sorted = numpy.array(fns)[si]
@@ -101,8 +101,8 @@ def create_quick_view(objname):
                 hdulist = fits.open(fn)
 
                 nsigma = [-5, +5]
-                um_mode = hdulist[0].header["UM_MODE"]
-                um_size = hdulist[0].header["UM_SIZE"]
+                um_mode = hdulist[0].header["UM_MODE"] if "UM_MODE" in hdulist[0].header else "???"
+                um_size = hdulist[0].header["UM_SIZE"] if "UM_SIZE" in hdulist[0].header else -1.
                 um_sizes[i_fn] = um_size
                 outfile = fn[:-5]+".jpg"
                 crop_outfile = fn[:-5]+".crop.jpg"
