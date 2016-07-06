@@ -140,6 +140,8 @@ if __name__ == "__main__":
         with open(sys.argv[1], "r") as f:
             objects = [l.split()[0] for l in f.readlines()]
         for objname in objects:
+            if (objname == "#"):
+                continue
             create_quick_view(objname)
     else:
         objname = sys.argv[1]
