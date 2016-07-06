@@ -25,29 +25,29 @@ def create_quick_view(objname):
 
     #print fns
 
-    index_fn = "%s/index.html" % (objname)
+    # index_fn = "%s/index.html" % (objname)
+    # with open(index_fn, "w") as index_file:
+    if (True):
+        # print >>index_file, """
+        # <html>
+        # <head>
+        #    <link rel="stylesheet" type="text/css" href="../reu_sdss.css">
+        #    <base target="_blank">
+        # </head>
+        # <body>"""
 
-    with open(index_fn, "w") as index_file:
-        print >>index_file, """
-        <html>
-        <head>
-           <link rel="stylesheet" type="text/css" href="../reu_sdss.css">
-           <base target="_blank">
-        </head>
-        <body>"""
-
-        print >>index_file, """
-        <h1>%(objname)s</h1>
-        <p><ul>
-            <li><a href="https://ned.ipac.caltech.edu/cgi-bin/objsearch?objname=%(objname)s&extend=no&hconst=73&omegam=0.27&omegav=0.73&corr_z=1&out_csys=Equatorial&out_equinox=J2000.0&obj_sort=RA+or+Longitude&of=pre_text&zv_breaker=30000.0&list_limit=5&img_stamp=YES">NED page</a></li>
-            <li><a href="https://ned.ipac.caltech.edu/cgi-bin/NEDatt?objname=%(objname)s">NED classifications</a></li>
-            <li><a href="https://ned.ipac.caltech.edu/cgi-bin/imgdata?objname=%(objname)s&hconst=73.0&omegam=0.27&omegav=0.73&corr_z=1">NED images</a></li>
-            <!--<li><a href="https://ned.ipac.caltech.edu/cgi-bin/datasearch?search_type=Photo_id&objid=58481&objname=%(objname)s&img_stamp=YES&hconst=73.0&omegam=0.27&omegav=0.73&corr_z=1&of=table">NED Spectral Energy Distributions</a></li>-->
-            <li><a href="http://simbad.u-strasbg.fr/simbad/sim-id?Ident=%(objname)s&NbIdent=1&Radius=2&Radius.unit=arcmin&submit=submit+id">SIMBad Identifier query</a></li>
-            </ul>
-            </p>""" % {
-            'objname': objname.replace(" ","+"),
-        }
+        # print >>index_file, """
+        # <h1>%(objname)s</h1>
+        # <p><ul>
+        #     <li><a href="https://ned.ipac.caltech.edu/cgi-bin/objsearch?objname=%(objname)s&extend=no&hconst=73&omegam=0.27&omegav=0.73&corr_z=1&out_csys=Equatorial&out_equinox=J2000.0&obj_sort=RA+or+Longitude&of=pre_text&zv_breaker=30000.0&list_limit=5&img_stamp=YES">NED page</a></li>
+        #     <li><a href="https://ned.ipac.caltech.edu/cgi-bin/NEDatt?objname=%(objname)s">NED classifications</a></li>
+        #     <li><a href="https://ned.ipac.caltech.edu/cgi-bin/imgdata?objname=%(objname)s&hconst=73.0&omegam=0.27&omegav=0.73&corr_z=1">NED images</a></li>
+        #     <!--<li><a href="https://ned.ipac.caltech.edu/cgi-bin/datasearch?search_type=Photo_id&objid=58481&objname=%(objname)s&img_stamp=YES&hconst=73.0&omegam=0.27&omegav=0.73&corr_z=1&of=table">NED Spectral Energy Distributions</a></li>-->
+        #     <li><a href="http://simbad.u-strasbg.fr/simbad/sim-id?Ident=%(objname)s&NbIdent=1&Radius=2&Radius.unit=arcmin&submit=submit+id">SIMBad Identifier query</a></li>
+        #     </ul>
+        #     </p>""" % {
+        #     'objname': objname.replace(" ","+"),
+        # }
 
         #
         # Add the GRI stack
@@ -63,18 +63,18 @@ def create_quick_view(objname):
             makequickview.make_image(fn, weight_fn=weight_fn, output_fn=crop_outfile,
                                      cutout=(ra, dec, 5, coord), min_max=min_max,
                                      scale='arcsinh')
-        print >>index_file, """
-            <div class="filtered">
-            <h2>%(o)s - gri stack</h2>
-            <p>full frame: <a href='%(ff)s'>%(ff)s</a><br>
-            <a href='%(cf)s'><img src='%(cf)s' style='width:500;'</img></a>
-            </p>
-            </div><hr>
-            """ % {
-                'cf': cropbn,
-                'ff': bn,
-                'o': objname,
-            }
+        # print >>index_file, """
+        #     <div class="filtered">
+        #     <h2>%(o)s - gri stack</h2>
+        #     <p>full frame: <a href='%(ff)s'>%(ff)s</a><br>
+        #     <a href='%(cf)s'><img src='%(cf)s' style='width:500;'</img></a>
+        #     </p>
+        #     </div><hr>
+        #     """ % {
+        #         'cf': cropbn,
+        #         'ff': bn,
+        #         'o': objname,
+        #     }
 
         #
         # Add the g/r/i image as 3-color image
@@ -114,18 +114,18 @@ def create_quick_view(objname):
                     makequickview.make_image(fn, weight_fn=weight_fn, output_fn=crop_outfile,
                                              cutout=(ra,dec,5,coord), min_max=min_max)
 
-                print >>index_file, """
-                <div class="filtered"><h2>%(o)s - %(m)s @ %(s).1f pixels</h2>
-                <p>full frame: <a href='%(ff)s'>%(ff)s</a><br>
-                <a href='%(cf)s'><img src='%(cf)s' style='width:500;'</img></a></p></div>
-                """ % {
-                    'cf': cropbn,
-                    'ff': bn,
-                    'o': objname,
-                    'm': um_mode,
-                    's': um_size,
-                }
-        print >>index_file, "</body></html>"
+        #         print >>index_file, """
+        #         <div class="filtered"><h2>%(o)s - %(m)s @ %(s).1f pixels</h2>
+        #         <p>full frame: <a href='%(ff)s'>%(ff)s</a><br>
+        #         <a href='%(cf)s'><img src='%(cf)s' style='width:500;'</img></a></p></div>
+        #         """ % {
+        #             'cf': cropbn,
+        #             'ff': bn,
+        #             'o': objname,
+        #             'm': um_mode,
+        #             's': um_size,
+        #         }
+        # print >>index_file, "</body></html>"
 
 
 
