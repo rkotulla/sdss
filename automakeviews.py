@@ -8,9 +8,8 @@ import querysdss
 import astropy
 import astropy.io.fits as fits
 
-if __name__ == "__main__":
 
-    objname = sys.argv[1]
+def create_quick_view(objname):
 
     # get ra/dec from name
     _, (ra, dec) = querysdss.resolve_name_to_radec(objname)
@@ -42,8 +41,8 @@ if __name__ == "__main__":
         <p><ul>
             <li><a href="https://ned.ipac.caltech.edu/cgi-bin/objsearch?objname=%(objname)s&extend=no&hconst=73&omegam=0.27&omegav=0.73&corr_z=1&out_csys=Equatorial&out_equinox=J2000.0&obj_sort=RA+or+Longitude&of=pre_text&zv_breaker=30000.0&list_limit=5&img_stamp=YES">NED page</a></li>
             <li><a href="https://ned.ipac.caltech.edu/cgi-bin/NEDatt?objname=%(objname)s">NED classifications</a></li>
-            <li><a href="https://ned.ipac.caltech.edu/cgi-bin/imgdata?objname=MESSIER+082&hconst=73.0&omegam=0.27&omegav=0.73&corr_z=1">NED images</a></li>
-            <li><a href="https://ned.ipac.caltech.edu/cgi-bin/datasearch?search_type=Photo_id&objid=58481&objname=%(objname)s2&img_stamp=YES&hconst=73.0&omegam=0.27&omegav=0.73&corr_z=1&of=table">NED Spectral Energy Distributions</a></li>
+            <li><a href="https://ned.ipac.caltech.edu/cgi-bin/imgdata?objname=%(objname)s&hconst=73.0&omegam=0.27&omegav=0.73&corr_z=1">NED images</a></li>
+            <!--<li><a href="https://ned.ipac.caltech.edu/cgi-bin/datasearch?search_type=Photo_id&objid=58481&objname=%(objname)s&img_stamp=YES&hconst=73.0&omegam=0.27&omegav=0.73&corr_z=1&of=table">NED Spectral Energy Distributions</a></li>-->
             <li><a href="http://simbad.u-strasbg.fr/simbad/sim-id?Ident=%(objname)s&NbIdent=1&Radius=2&Radius.unit=arcmin&submit=submit+id">SIMBad Identifier query</a></li>
             </ul>
             </p>""" % {
@@ -54,8 +53,8 @@ if __name__ == "__main__":
         # Add the GRI stack
         #
         fn = "%s/%s_gri.fits" % (objname, objname)
-        outfile = fn[:-5] + ".png"
-        crop_outfile = fn[:-5] + ".crop.png"
+        outfile = fn[:-5] + ".jpg"
+        crop_outfile = fn[:-5] + ".crop.jpg"
         _, bn = os.path.split(outfile)
         _, cropbn = os.path.split(crop_outfile)
         if (not os.path.isfile(outfile)):
@@ -105,8 +104,8 @@ if __name__ == "__main__":
                 um_mode = hdulist[0].header["UM_MODE"]
                 um_size = hdulist[0].header["UM_SIZE"]
                 um_sizes[i_fn] = um_size
-                outfile = fn[:-5]+".png"
-                crop_outfile = fn[:-5]+".crop.png"
+                outfile = fn[:-5]+".jpg"
+                crop_outfile = fn[:-5]+".crop.jpg"
                 _, bn = os.path.split(outfile)
                 _, cropbn = os.path.split(crop_outfile)
 
@@ -127,3 +126,17 @@ if __name__ == "__main__":
                     's': um_size,
                 }
         print >>index_file, "</body></html>"
+
+
+
+if __name__ == "__main__":
+
+
+    if (os.path.isfile(sys.argv[1])):
+        with open(sys.argv[1], "r") as f:
+            objects = [l.split()[0] for l in f.readlines()]
+        for objname in objects:
+            create_quick_view(objname)
+    else:
+        objname = sys.argv[1]
+        create_quick_view(objname)
