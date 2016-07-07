@@ -14,8 +14,55 @@ $objname = $chunks[count($chunks)-1];
 $gauss = glob("*.filtered.gauss_*.crop.jpg");
 $median = glob("*.filtered.median_*.crop.jpg");
 
+$all_dirs = scandir('../', SCANDIR_SORT_ASCENDING);
+//print_r($all_dirs);
+$objects = array();
+foreach ($all_dirs as $item) {
+    $testdir = "../".$item;
+    if ($item == "." || $item == "..") {
+        continue;
+    }
+    if (is_dir($testdir)) {
+        $objects[] = $item;
+    }
+}
+//print_r($objects);
+sort($objects);
+
+$current_obj = array_search($objname, $objects);
+//print($current_obj);
+//print($objects[$current_obj]);
 //var_dump($gauss);
 //var_dump($median);
+
+$before_after=4;
+if ($current_obj == 0) {
+    $prev = "";
+    $iprev = 0;
+} else {
+    $prev = $objects[$current_obj-1];
+    $iprev = $current_obj-$before_after;
+    if ($iprev < 0) {
+        $iprev = 0;
+    }
+}
+
+if ($current_obj == count($objects)-1) {
+    $next = "";
+    $inext = count($objects)-1;
+} else {
+    $next = $objects[$current_obj+1];
+    $inext = $current_obj+$before_after;
+    if ($inext >= count($objects)) {
+        $inext = count($objects)-1;
+    }
+}
+
+$comment_fn = "comment.txt";
+$comment = "";
+if (is_file($comment_fn)) {
+    $comment = file_get_contents($comment_fn);
+}
 ?>
 
 
@@ -26,10 +73,33 @@ $median = glob("*.filtered.median_*.crop.jpg");
     <link rel="stylesheet" type="text/css" href="../reu_sdss.css">
     <base target="_blank">
     <!-- This is the php version -->
+    <title><?=$objname?> -- REU Project: Early-type galaxies with peculiarities</title>
 </head>
 <body>
 
+<div class="navigate_head">
+    <div class='prev'><a href="../<?=$prev?>" target="_self">Previous</a></div>
+    <div class='next'><a href="../<?=$next?>" target="_self">Next</a></div>
+    <div class="navigate">
+    <?php
+        for ($i=$iprev;$i<=$inext; $i++) {
+            ?>
+            <span class="link"><a href="../<?=$objects[$i]?>" target="_self"><?=$objects[$i]?></a></span>
+            <?php
+        }
+    ?>
+    </div>
+</div>
+
+</div>
 <h1><?= $objname ?></h1>
+<div class="comments">
+    <form method="POST" action="../save_comment.php" target="_self">
+        Comments:<span style="float: right; "><input type="submit" value="save"></span><br>
+        <textarea name="comment" rows="6" cols="50"><?=$comment?></textarea>
+        <input name="objname" type="hidden" value="<?=$objname?>">
+    </form>
+</div>
 <p><ul>
     <li><a href="https://ned.ipac.caltech.edu/cgi-bin/objsearch?objname=<?= $objname ?>&extend=no&hconst=73&omegam=0.27&omegav=0.73&corr_z=1&out_csys=Equatorial&out_equinox=J2000.0&obj_sort=RA+or+Longitude&of=pre_text&zv_breaker=30000.0&list_limit=5&img_stamp=YES">NED page</a></li>
     <li><a href="https://ned.ipac.caltech.edu/cgi-bin/NEDatt?objname=<?= $objname ?>">NED classifications</a></li>
@@ -46,7 +116,7 @@ $median = glob("*.filtered.median_*.crop.jpg");
     <p>full frame: <a href='<?= $objname ?>_gri.jpg'><?= $objname ?>_gri.jpg</a><br>
         <a href='<?= $objname ?>_gri.crop.jpg'><img src='<?= $objname ?>_gri.crop.jpg' style='width: 500px;'</img></a>
     </p>
-</div><hr>
+</div><!--<hr>-->
 
 <?php
  // Loop over all filtered files and create div blocks with data and images
