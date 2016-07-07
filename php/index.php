@@ -57,6 +57,12 @@ if ($current_obj == count($objects)-1) {
         $inext = count($objects)-1;
     }
 }
+
+$comment_fn = "comment.txt";
+$comment = "";
+if (is_file($comment_fn)) {
+    $comment = file_get_contents($comment_fn);
+}
 ?>
 
 
@@ -67,6 +73,7 @@ if ($current_obj == count($objects)-1) {
     <link rel="stylesheet" type="text/css" href="../reu_sdss.css">
     <base target="_blank">
     <!-- This is the php version -->
+    <title><?=$objname?> -- REU Project: Early-type galaxies with peculiarities</title>
 </head>
 <body>
 
@@ -86,6 +93,13 @@ if ($current_obj == count($objects)-1) {
 
 </div>
 <h1><?= $objname ?></h1>
+<div class="comments">
+    <form method="POST" action="../save_comment.php" target="_self">
+        Comments:<span style="float: right; "><input type="submit" value="save"></span><br>
+        <textarea name="comment" rows="6" cols="50"><?=$comment?></textarea>
+        <input name="objname" type="hidden" value="<?=$objname?>">
+    </form>
+</div>
 <p><ul>
     <li><a href="https://ned.ipac.caltech.edu/cgi-bin/objsearch?objname=<?= $objname ?>&extend=no&hconst=73&omegam=0.27&omegav=0.73&corr_z=1&out_csys=Equatorial&out_equinox=J2000.0&obj_sort=RA+or+Longitude&of=pre_text&zv_breaker=30000.0&list_limit=5&img_stamp=YES">NED page</a></li>
     <li><a href="https://ned.ipac.caltech.edu/cgi-bin/NEDatt?objname=<?= $objname ?>">NED classifications</a></li>
@@ -102,7 +116,7 @@ if ($current_obj == count($objects)-1) {
     <p>full frame: <a href='<?= $objname ?>_gri.jpg'><?= $objname ?>_gri.jpg</a><br>
         <a href='<?= $objname ?>_gri.crop.jpg'><img src='<?= $objname ?>_gri.crop.jpg' style='width: 500px;'</img></a>
     </p>
-</div><hr>
+</div><!--<hr>-->
 
 <?php
  // Loop over all filtered files and create div blocks with data and images
