@@ -27,15 +27,18 @@ div.filtered {
   float: left;
   background: #FDF3E7;
 }
-
+img.filtered {
+    width: 500px;
+    height: 500px;
+}
 .next {
-    #float: left;
+    /* float: left; */
     position: absolute;
     right: 0;
     padding: 10px;
 }
 .prev {
-    #float: right;
+    /* float: right; */
     position: absolute;
     left: 0;
     padding: 10px;
@@ -61,9 +64,9 @@ hr {
 
 .comments {
     float: right;
-    #width: 250px;
+    /* #width: 250px;
     #border: 1px solid black;
-    #height: 100px;
+    #height: 100px; */
 }
 
 
@@ -78,12 +81,12 @@ img.summary {
     /* padding: 10px; */
 }
 h1.summary {
-    #border-top: 1px solid black;
-    #margin-top: 0;
-    #padding-top: 20px;
-    #margin-bottom: 0;
+    /* #border-top: 1px solid black; */
+    /* #margin-top: 0; */
+    /* #padding-top: 20px; */
+    /* #margin-bottom: 0; */
     /* padding: 10px; */
-    #padding-bottom: 0;
+    /* #padding-bottom: 0; */
     /* margin-top: 50px; */
     position: relative;
     padding: 10px;
