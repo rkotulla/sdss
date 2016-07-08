@@ -12,7 +12,12 @@ import astropy.io.fits as fits
 def create_quick_view(objname):
 
     # get ra/dec from name
-    _, (ra, dec) = querysdss.resolve_name_to_radec(objname)
+    try:
+        _, (ra, dec) = querysdss.resolve_name_to_radec(objname)
+    except:
+        print "Found problem resolving the name"
+        return
+
     print ra, dec
     #ra,dec = 148.97195, 69.68075
     coord = astropy.coordinates.SkyCoord(ra, dec, frame='icrs',
