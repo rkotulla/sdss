@@ -149,5 +149,5 @@ if __name__ == "__main__":
                 continue
             create_quick_view(objname)
     else:
-        objname = sys.argv[1]
-        create_quick_view(objname)
+        for objname in sys.argv[1:]:
+            create_quick_view(objname)
