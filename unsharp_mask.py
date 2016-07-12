@@ -12,7 +12,7 @@ import scipy, scipy.ndimage
 import astLib.astWCS
 
 from optparse import OptionParser
-
+import parallel_filter
 
 def unsharp_mask(data, sizes=[5], mode='median'):
 
@@ -27,9 +27,19 @@ def unsharp_mask(data, sizes=[5], mode='median'):
                 output=None, mode='constant', cval=0.0
                 )
         elif (mode == 'gauss'):
-            smoothed = scipy.ndimage.filters.gaussian_filter(
-                input=data.astype(numpy.float),
-                sigma=size, order=0, output=None, mode='reflect'
+            # smoothed = scipy.ndimage.filters.gaussian_filter(
+            #     input=data.astype(numpy.float),
+            #     sigma=size, order=0, output=None, mode='reflect'
+            # )
+            smoothed = parallel_filter.parallel_filter(
+                fct=scipy.ndimage.filters.gaussian_filter,
+                data=data.astype(numpy.float),
+                overlap=4*size,
+
+                sigma=size,
+                order=0,
+                mode='reflect',
+                truncate=4,
             )
         else:
             pass
@@ -124,8 +134,8 @@ if __name__ == "__main__":
                 hdulist_median.writeto("%s.filtered.%s_%05.1f.fits" % (infile[:-5], options.mode, size), clobber=True)
         except (KeyboardInterrupt, SystemError, SystemExit):
             raise
-        except:
-            print "There was a problem processing %s" % (infile)
+        except Exception as e:
+            print "There was a problem processing %s\n%s" % (infile, str(e))
 
 
         
