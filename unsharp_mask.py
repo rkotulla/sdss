@@ -103,9 +103,15 @@ if __name__ == "__main__":
         #
 
         try:
-            smoothed, filtered = unsharp_mask(data=hdulist[0].data, mode=options.mode, sizes=sizes)
+            missing_sizes = []
+            for size in sizes:
+                fn = "%s.filtered.%s_%05.1f.fits" % (infile[:-5], options.mode, size)
+                if (not os.path.isfile(fn)):
+                    missing_sizes.append(size)
 
-            for i_size, size in enumerate(sizes):
+            smoothed, filtered = unsharp_mask(data=hdulist[0].data, mode=options.mode, sizes=missing_sizes)
+
+            for i_size, size in enumerate(missing_sizes):
                 if (options.smooth):
                     hdulist[0].data = smoothed[i_size]
                     hdulist[0].header['UM_MODE'] = options.mode
