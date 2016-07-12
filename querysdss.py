@@ -159,26 +159,42 @@ class SDSS_Downloader(threading.Thread):
         return
 
 
-def resolve_name_to_radec(objname):
+def resolve_name_to_radec(objname, coord_fn=None):
 
-    try:
-        results = Simbad.query_object(objname)
-    except:
-        return None, (-1,-1)
+    if (not coord_fn == None and os.path.isfile(coord_fn)):
+        print "loading coordinates from file"
+        with open(coord_fn, "r") as cf:
+            line = cf.readline()
+            items = line.split()
+            _ra = items[0]
+            _dec = items[1]
+    else:
+        try:
+            print "querying Simbad"
+            results = Simbad.query_object(objname)
+        except:
+            return None, (-1,-1)
 
-    print(results[0][1])
-    print(results[0][2])
+        print(results[0][1])
+        print(results[0][2])
 
-    print type(results[0][1])
+        print type(results[0][1])
 
-    e = ephem.Equatorial(str(results[0][1]), str(results[0][2]))
+        _ra  = results[0][1].replace(" ", ":")
+        _dec = results[0][2].replace(" ", ":")
+
+    e = ephem.Equatorial(str(_ra), str(_dec))
     print(e)
     print(e.ra, e.dec)
 
+    #
+    # Save the coordinates
+    #
+    if (not coord_fn == None and not os.path.isfile(coord_fn)):
+        with open(coord_fn, "w") as cf:
+            print >> cf, _ra, _dec, numpy.degrees(e.ra), numpy.degrees(e.dec)
 
-
-
-    coords = astropy.coordinates.SkyCoord(results[0][1], results[0][2], frame='icrs',
+    coords = astropy.coordinates.SkyCoord(_ra, _dec, frame='icrs',
                                           unit=(astropy.units.hourangle, astropy.units.deg))
     print(coords)
 
@@ -199,11 +215,14 @@ def query_sdss_object(objname, radius=10., resample_dir="./", parallel=False):
     #
     # Resolve the object name using simbad
     #
-    coords, _ = resolve_name_to_radec(objname=objname)
+    coord_fn = "%s/coord.txt" % (objname)
+    coords, ra_dec = resolve_name_to_radec(objname=objname, coord_fn=coord_fn)
+
 
     print("Using field-of-view of >= %.2f arcmin"  %(radius))
     search_radius = astropy.coordinates.Angle(radius/60, unit=astropy.units.deg)
     xid = astroquery.sdss.SDSS.query_region(coords, radius=search_radius)
+
 
     print(xid)
 
