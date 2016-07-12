@@ -128,8 +128,8 @@ class SDSS_Downloader(threading.Thread):
                     #                             band=filtername
                     #                             )
                     break
-                except:
-                    print("Encountered error, trying again after 1 second")
+                except Exception as e:
+                    print("Encountered error, trying again after 1 second:\n%s" % (e))
                     time.sleep(1)
                     n_retries += 1
                     continue
@@ -320,7 +320,7 @@ def query_sdss_object(objname, radius=10., resample_dir="./", parallel=False):
     if (parallel):
         # For parallel processing, start the worker threads
         downloaders = []
-        for n_threads in range(15):
+        for n_threads in range(2):
             t = SDSS_Downloader(queue=download_queue,
                                 rawdir=rawdir,
                                 ugriz_filenames=ugriz_filenames,
@@ -431,6 +431,7 @@ if __name__ == "__main__":
     #
     # Now download all files, one after the other
     #
+    print("Using %s for resampling" % (options.resample_dir))
     for objname in objects:
         if (os.path.isdir(objname)):
             print "Object %s exists, skipping" % (objname)
