@@ -46,7 +46,7 @@ class filter_thread( threading.Thread ):
             except Queue.Empty:
                 break
 
-def parallel_filter(fct, data, nchunks, overlap, ncpus=0, **kwargs):
+def parallel_filter(fct, data, overlap, nchunks=100, ncpus=0, **kwargs):
 
     # find the gridding to use
     n_xy = int(math.ceil(math.sqrt(nchunks)))
@@ -101,9 +101,9 @@ def parallel_filter(fct, data, nchunks, overlap, ncpus=0, **kwargs):
     # and wait until all work is done
     for i,worker in enumerate(workers):
         worker.join()
-        print "one worker (%d / %d) done" % (i+1, len(workers))
+        #print "one worker (%d / %d) done" % (i+1, len(workers))
 
-    print chunksize, data.shape
+    #print chunksize, data.shape
     return output
 
 if __name__ == "__main__":
