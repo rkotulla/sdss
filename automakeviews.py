@@ -11,18 +11,20 @@ import astropy.io.fits as fits
 
 def create_quick_view(objname):
 
-    # get ra/dec from name
-    try:
-        _, (ra, dec) = querysdss.resolve_name_to_radec(objname)
-    except:
-        print "Found problem resolving the name"
-        return
-
-    print ra, dec
-    #ra,dec = 148.97195, 69.68075
-    coord = astropy.coordinates.SkyCoord(ra, dec, frame='icrs',
-                                          unit=(astropy.units.hourangle, astropy.units.deg))
-
+    coord, (ra,dec) = querysdss.resolve_name_to_radec(objname=objname,
+                                                      coord_fn="%s/coord.txt" % (objname))
+    # # get ra/dec from name
+    # try:
+    #     _, (ra, dec) = querysdss.resolve_name_to_radec(objname)
+    # except:
+    #     print "Found problem resolving the name"
+    #     return
+    #
+    # print ra, dec
+    # #ra,dec = 148.97195, 69.68075
+    # coord = astropy.coordinates.SkyCoord(ra, dec, frame='icrs',
+    #                                       unit=(astropy.units.hourangle, astropy.units.deg))
+    #
     print coord, ra, dec
 
     weight_list = glob.glob("%s/%s_gri.weight.fits" % (objname, objname))
@@ -149,5 +151,5 @@ if __name__ == "__main__":
                 continue
             create_quick_view(objname)
     else:
-        objname = sys.argv[1]
-        create_quick_view(objname)
+        for objname in sys.argv[1:]:
+            create_quick_view(objname)

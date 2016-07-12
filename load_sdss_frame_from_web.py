@@ -30,7 +30,7 @@ def convert_flatfield_to_tablehdu(hdu):
     return hdu
 
 
-def get_fits_from_sdss(run, rerun=301, camcol=1, field=1, band='g', ensure_single_imagehdu=False):
+def get_fits_from_sdss(run, rerun=301, camcol=1, field=1, band='g', ensure_single_imagehdu=False, rawfile=None):
     logger = logging.getLogger('GetFitsFromSDSS')
 
     url = "http://dr12.sdss3.org/sas/dr12/boss/photoObj/frames/%(rerun)3d/%(run)d/%(camcol)d/frame-%(filter)1s-%(run)06d-%(camcol)d-%(field)04d.fits.bz2" % {
@@ -41,7 +41,7 @@ def get_fits_from_sdss(run, rerun=301, camcol=1, field=1, band='g', ensure_singl
         'filter': band,
     }
     logger.debug("SDSS image source: %s" % (url))
-    hdu = openfitsfromweb(url)
+    hdu = openfitsfromweb(url, rawfile)
 
     hdu[0].header['Q_RUN'] = (run, "run")
     hdu[0].header['Q_RERUN'] = (rerun, "rerun")
@@ -55,11 +55,12 @@ def get_fits_from_sdss(run, rerun=301, camcol=1, field=1, band='g', ensure_singl
     return hdu
 
 
-def openfitsfromweb(url):
+def openfitsfromweb(url, rawfile=None):
 
     logger = logging.getLogger("DownloadFitsFromWeb")
 
     # open the response
+    #print(url)
     logger.debug("Querying %s" % (url))
     response = urllib2.urlopen(url)
 
@@ -86,6 +87,10 @@ def openfitsfromweb(url):
     except:
         return None
     tmpfile.seek(0)
+
+    #if (not rawfile == None):
+    #    with open(rawfile, "wb") as rf:
+    #        rf.write(data)
 
     # with open("/tmp/myfile.fits.bz2", 'wb') as f:
     #     f.write(data)

@@ -1,6 +1,6 @@
 REU program at UW Madison
 # The search for central features in early-type galaxies
-Student: Travis Stadler /
+Student: Travis Stadler (North Caroline A &amp; T) /
 Mentor: Ralf Kotulla (@rkotulla)
 
 
@@ -14,6 +14,31 @@ Mentor: Ralf Kotulla (@rkotulla)
 ### How to use each of the tools
 
 #### ```querysdss```
+
+querysdss takes either a filename as only parameter, or a list of object identifiers (e.g. galaxy name, NGC number,
+star name, or whatever simbad can resolve into coordinates). In the case of usng a filename as input, this file should
+contain a list of object identifiers, with one object per line. Empty lines or lines starting starting with # are
+ignored.
+
+**Examples:**
+
+Download images for M81, M82, M51 and M42:
+
+```querysdss.py m82 m81 m51 m42```
+
+Download a object list:
+
+```querysdss.py objects.cat```
+
+In this case, the ```objects.cat``` file should look like this:
+
+```
+M81
+M82
+M51
+# M1
+M42
+```
 
 #### ```unsharp_mask.py```
 

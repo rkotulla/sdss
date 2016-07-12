@@ -95,7 +95,7 @@ def make_image(img_fn, weight_fn, output_fn, cutout=None, min_max=None, nsigma=[
     print output_fn
     image = Image.fromarray(numpy.uint8(greyscale * 255))
     image = image.transpose(Image.FLIP_TOP_BOTTOM)
-    image.save(output_fn, "PNG")
+    image.save(output_fn, "JPEG")
     del image
 
     return (min_level, max_level)
