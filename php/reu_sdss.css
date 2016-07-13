@@ -103,3 +103,7 @@ span.h1coord {
     font-size: 50%;
     font-weight: normal;
 }
+pre.summary {
+    float: left;
+    font-family: inherit;
+}
