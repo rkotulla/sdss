@@ -98,3 +98,8 @@ h1.summary {
 p.summary {
     float: left;
 }
+
+span.h1coord {
+    font-size: 50%;
+    font-weight: normal;
+}

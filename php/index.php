@@ -69,6 +69,7 @@ $coord_fn = "coord.txt";
 $ra=0;
 $dec=0;
 $coord_valid=false;
+$h1_coord = "";
 if (is_file($coord_fn)) {
     $f = fopen($coord_fn, 'r');
     $line = fgets($f);
@@ -77,8 +78,10 @@ if (is_file($coord_fn)) {
         $ra = $coords[2];
         $dec = $coords[3];
         $coord_valid=true;
+        $h1_coord = sprintf(" <span class='h1coord'>(%s %s)</span>", $coords[0], $coords[1]);
     }
 }
+
 ?>
 
 
@@ -107,7 +110,7 @@ if (is_file($coord_fn)) {
     </div>
 </div>
 
-<h1><?= $objname ?></h1>
+<h1><?= $objname ?><?=$h1_coord?></h1>
 <div class="comments">
     <form method="POST" action="../save_comment.php" target="_self">
         Comments:<span style="float: right; "><input type="submit" value="save"></span><br>
@@ -131,6 +134,7 @@ if (is_file($coord_fn)) {
         <li><a href="http://sha.ipac.caltech.edu/applications/Spitzer/SHA/">Spitzer Archive Search Page</a></li>
         <li><a href="http://irsa.ipac.caltech.edu/applications/wise/">WISE Archive Search Page</a></li>
     <?php } ?>
+    <li><a href="http://galex.stsci.edu/GR6/?page=tilelist&survey=allsurveys">GALEX archive search page</a></li>
 </ul>
 
 <div class="filtered">
