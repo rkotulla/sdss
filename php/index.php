@@ -90,6 +90,11 @@ if (is_file($coord_fn)) {
 <html>
 <head>
     <link rel="stylesheet" type="text/css" href="../reu_sdss.css">
+
+    <!-- for aladin lite: -->
+    <link rel="stylesheet" href="http://aladin.u-strasbg.fr/AladinLite/api/v2/latest/aladin.min.css" />
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.min.js" charset="utf-8"></script>
+
     <base target="_blank">
     <!-- This is the php version -->
     <title><?=$objname?> -- REU Project: Early-type galaxies with peculiarities</title>
@@ -174,6 +179,45 @@ foreach ($lists as $mode => $croplist) {
 
     }
 }
+?>
+
+<hr>
+<h2 style="border-top: solid 2px black; padding-top: 10px; padding-left: 10px;">Aladin Lite viewer</h2>
+
+<?php
+
+$aladins = [
+    "SDSS (color)" => ["sdss", "P/SDSS9/color"],
+    "GALEX GR6" => ["galex", "P/GALEXGR6/AIS/color"],
+    "AllWISE" => ["wise", "P/allWISE/color"],
+    "DSS (color)" => ["dss", "P/DSS2/color"],
+    "XMM" => ["xmm", "P/XMM/PN/color"],
+];
+
+foreach ($aladins as $label => $opts) {
+    $div_name = $opts[0];
+    $cat_name = $opts[1];
+    //printf ("%s --> %s %s", $label, $opts[0], $opts[1]);
+
+    ?>
+
+    <div class="filtered">
+        <h3><?=$label?></h3>
+        <div id="aladin-lite-div-<?=$div_name?>" style="width:500px;height:500px;"></div>
+        <script type="text/javascript" src="http://aladin.u-strasbg.fr/AladinLite/api/v2/latest/aladin.min.js" charset="utf-8"></script>
+        <script type="text/javascript">
+            var aladin = A.aladin('#aladin-lite-div-<?=$div_name?>', {
+                survey: "<?=$cat_name?>",
+                fov:0.11,
+                target:"<?=$objname?>",
+                showReticle: false,
+            });
+        </script>
+    </div>
+
+    <?php
+}
+
 ?>
 
 </body></html>
