@@ -241,7 +241,7 @@ foreach ($aladins as $label => $opts) {
     if (!$has_sdss_spec) {
     ?>
 
-        No SDSS data available - sorry!
+        No SDSS spectroscopy available - sorry!
 
         <?php
 
