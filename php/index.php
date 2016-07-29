@@ -236,35 +236,33 @@ foreach ($aladins as $label => $opts) {
         $fiber = $json_data['fiberID'];
         // print($specobjid);
         $has_sdss_spec = true;
-    }
 
-    if (!$has_sdss_spec) {
+        ?>
+
+        <ul>
+            <li><a href="<?=$objname?>_sdssspec.fits">SDSS spectrum as FITS</a></li>
+            <li><a href="http://dr12.sdss3.org/spectrumDetail?plateid=<?=$plateid?>&mjd=<?=$mjd?>&fiber=<?=$fiber?>">Interactive spectrum</a></li>
+            <li><a href="http://skyserver.sdss.org/dr12/en/tools/explore/summary.aspx?specobjid=<?=$specobjid?>">SDSS Explorer</a></li>
+        </ul>
+        <div class="filtered">
+            <a href="http://skyserver.sdss.org/dr12/en/get/SpecById.ashx?id=<?=$specobjid?>">
+                <img src="http://skyserver.sdss.org/dr12/en/get/SpecById.ashx?id=<?=$specobjid?>">
+            </a>
+        </div>
+
+        <?php
+
+    } else {
+
     ?>
 
         No SDSS spectroscopy available - sorry!
 
         <?php
 
-    } else {
-
-?>
-
-<ul>
-    <li><a href="<?=$objname?>_sdssspec.fits">SDSS spectrum as FITS</a></li>
-    <li><a href="http://dr12.sdss3.org/spectrumDetail?plateid=<?=$plateid?>&mjd=<?=$mjd?>&fiber=<?=$fiber?>">Interactive spectrum</a></li>
-    <li><a href="http://skyserver.sdss.org/dr12/en/tools/explore/summary.aspx?specobjid=<?=$specobjid?>">SDSS Explorer</a></li>
-</ul>
-<div class="filtered">
-    <a href="http://skyserver.sdss.org/dr12/en/get/SpecById.ashx?id=<?=$specobjid?>">
-        <img src="http://skyserver.sdss.org/dr12/en/get/SpecById.ashx?id=<?=$specobjid?>">
-    </a>
-</div>
-
-<?php
     }
 
-    ?>
-
+?>
 
 </body></html>
 
