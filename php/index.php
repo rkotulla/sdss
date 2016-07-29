@@ -84,9 +84,6 @@ if (is_file($coord_fn)) {
 
 ?>
 
-
-
-
 <html>
 <head>
     <link rel="stylesheet" type="text/css" href="../reu_sdss.css">
@@ -124,6 +121,8 @@ if (is_file($coord_fn)) {
     </form>
 </div>
 <ul>
+    <li><a target="_self" href="#aladin">Jump to Aladin lite images</a></li>
+    <li><a target="_self" href="#sdssspec">Jump to SDSS Spectroscopy</a></li>
     <li><a href="https://ned.ipac.caltech.edu/cgi-bin/objsearch?objname=<?= $objname ?>&extend=no&hconst=73&omegam=0.27&omegav=0.73&corr_z=1&out_csys=Equatorial&out_equinox=J2000.0&obj_sort=RA+or+Longitude&of=pre_text&zv_breaker=30000.0&list_limit=5&img_stamp=YES">NED page</a></li>
     <li><a href="https://ned.ipac.caltech.edu/cgi-bin/NEDatt?objname=<?= $objname ?>">NED classifications</a></li>
     <li><a href="https://ned.ipac.caltech.edu/cgi-bin/imgdata?objname=<?= $objname ?>&hconst=73.0&omegam=0.27&omegav=0.73&corr_z=1">NED images</a></li>
@@ -182,7 +181,7 @@ foreach ($lists as $mode => $croplist) {
 ?>
 
 <hr>
-<h2 style="border-top: solid 2px black; padding-top: 10px; padding-left: 10px;">Aladin Lite viewer</h2>
+<h2 id="aladin" style="border-top: solid 2px black; padding-top: 10px; padding-left: 10px;">Aladin Lite viewer</h2>
 
 <?php
 
@@ -219,6 +218,53 @@ foreach ($aladins as $label => $opts) {
 }
 
 ?>
+
+<hr>
+<h2 id="sdssspec" style="border-top: solid 2px black; padding-top: 10px; padding-left: 10px;">SDSS spectroscopy</h2>
+
+<?php
+    $json_fn = "sdss_spec.json";
+    $has_sdss_spec = false;
+    if (is_file($json_fn)) {
+        $json_raw_data = file_get_contents($json_fn);
+        $json_data = json_decode($json_raw_data, true);
+        // print_r($json_data);
+
+        $specobjid = $json_data['specobjid'];
+        $plateid = $json_data['plate'];
+        $mjd = $json_data['mjd'];
+        $fiber = $json_data['fiberID'];
+        // print($specobjid);
+        $has_sdss_spec = true;
+    }
+
+    if (!$has_sdss_spec) {
+    ?>
+
+        No SDSS data available - sorry!
+
+        <?php
+
+    } else {
+
+?>
+
+<ul>
+    <li><a href="<?=$objname?>_sdssspec.fits">SDSS spectrum as FITS</a></li>
+    <li><a href="http://dr12.sdss3.org/spectrumDetail?plateid=<?=$plateid?>&mjd=<?=$mjd?>&fiber=<?=$fiber?>">Interactive spectrum</a></li>
+    <li><a href="http://skyserver.sdss.org/dr12/en/tools/explore/summary.aspx?specobjid=<?=$specobjid?>">SDSS Explorer</a></li>
+</ul>
+<div class="filtered">
+    <a href="http://skyserver.sdss.org/dr12/en/get/SpecById.ashx?id=<?=$specobjid?>">
+        <img src="http://skyserver.sdss.org/dr12/en/get/SpecById.ashx?id=<?=$specobjid?>">
+    </a>
+</div>
+
+<?php
+    }
+
+    ?>
+
 
 </body></html>
 
