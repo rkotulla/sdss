@@ -61,7 +61,7 @@ foreach ($objects as $objname) {
         }
     ?>
 
-    <p class="summary"><?=$comment?></p>
+    <pre class="summary"><?=$comment?></pre>
 
     <?php
 
