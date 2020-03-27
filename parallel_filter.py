@@ -25,6 +25,8 @@ class filter_thread( threading.Thread ):
                 #print block
 
                 _out, _in = block
+                _out = [int(o) for o in _out]
+                _in = [int(i) for i in _in ]
                 #print _out, _in
                 #print self.args
 
