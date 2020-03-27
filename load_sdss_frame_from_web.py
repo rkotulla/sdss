@@ -54,13 +54,38 @@ def get_fits_from_sdss(run, rerun=301, camcol=1, field=1, band='g', ensure_singl
 
     return hdu
 
+def download_file(url, target_fn=None):
+
+    logger = logging.getLogger("Downloader")
+
+    # open the response
+    print("Querying %s" % (url))
+    response = urllib2.urlopen(url)
+
+    #
+    # Make sure the server reports the response as OK (HTTP code 200)
+    #
+    print("Server responded: %d" % (response.getcode()))
+    if (response.getcode() != 200):
+        return None
+
+    data = response.read()
+
+    if (target_fn is not None):
+        with open(target_fn, "w") as tf:
+            tf.write(data)
+            return len(data)
+    else:
+        return data
+
+
 
 def openfitsfromweb(url, rawfile=None):
 
     logger = logging.getLogger("DownloadFitsFromWeb")
 
     # open the response
-    #print(url)
+    print(url)
     logger.debug("Querying %s" % (url))
     response = urllib2.urlopen(url)
 
