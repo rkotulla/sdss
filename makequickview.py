@@ -27,7 +27,8 @@ def make_image(img_fn, weight_fn, output_fn, cutout=None, min_max=None, nsigma=[
         weight_hdulist = fits.open(weight_fn)
         weight_map = weight_hdulist[0].data
     else:
-        weight_map = 1
+        weight_map = numpy.ones_like(data)
+
 
     #
     # Mask out all areas ouside the covered f.o.v.
@@ -106,6 +107,15 @@ if __name__ == "__main__":
     parser.add_option("-w", "--weight", dest="weight_fn",
                       help="weight filename",
                       default="", type=str)
+    parser.add_option("-s", "--scale", dest="scale",
+                      help="scaling [linear|arcsinh]",
+                      default="linear", type=str)
+    parser.add_option("-x", "--max", dest="max",
+                      help="scaling [linear|arcsinh]",
+                      default=5, type=float)
+    parser.add_option("-n", "--min", dest="min",
+                      help="scaling [linear|arcsinh]",
+                      default=-2, type=float)
     (options, cmdline_args) = parser.parse_args()
 
     print cmdline_args
@@ -114,7 +124,11 @@ if __name__ == "__main__":
 
 
         output_fn = fn[:-5]+".png"
-        make_image(fn, options.weight_fn, output_fn)
+        if (os.path.isfile(output_fn)):
+            continue
+
+        make_image(fn, options.weight_fn, output_fn, nsigma=[options.min, options.max],
+                   scale=options.scale)
 
         # #
         # # Open input files
