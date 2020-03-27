@@ -175,6 +175,9 @@ def resolve_name_to_radec(objname, coord_fn=None):
         except:
             return None, (-1,-1)
 
+        if (results == None):
+            return None, (-1,-1)
+
         print(results[0][1])
         print(results[0][2])
 
@@ -215,14 +218,25 @@ def query_sdss_object(objname, radius=10., resample_dir="./", parallel=False):
     #
     # Resolve the object name using simbad
     #
-    coord_fn = "%s/coord.txt" % (objname)
-    coords, ra_dec = resolve_name_to_radec(objname=objname, coord_fn=coord_fn)
+    if (objname.startswith("pos:")):
+        items = objname.split(":")[1:3]
+        _ra = float(items[0])
+        _dec = float(items[1])
+        print "Using user-defined coordiantes: %f %f" % (_ra, _dec)
+        coords = astropy.coordinates.SkyCoord(_ra, _dec, frame='icrs',
+                                          unit=(astropy.units.deg, astropy.units.deg))
+    else:
+        coord_fn = "%s/coord.txt" % (objname)
+        coords, ra_dec = resolve_name_to_radec(objname=objname, coord_fn=coord_fn)
 
 
     print("Using field-of-view of >= %.2f arcmin"  %(radius))
     search_radius = astropy.coordinates.Angle(radius/60, unit=astropy.units.deg)
-    xid = astroquery.sdss.SDSS.query_region(coords, radius=search_radius)
-
+    try:
+        xid = astroquery.sdss.SDSS.query_region(coords, radius=search_radius)
+    except Exception as e:
+        print "Problem querying SDSS source catalog:\n%s" % (str(e))
+        return
 
     print(xid)
 
@@ -437,6 +451,9 @@ if __name__ == "__main__":
     parser.add_option("-p", "--parallel", dest="parallel",
                       help="Download all files for a given object in parallel",
                       default=False, action='store_true')
+    parser.add_option("-f", "--force", dest="force",
+                      help="Force running, even if data already exists",
+                      default=False, action='store_true')
     (options, cmdline_args) = parser.parse_args()
 
     if (os.path.isfile(cmdline_args[0])):
@@ -452,7 +469,7 @@ if __name__ == "__main__":
     #
     print("Using %s for resampling" % (options.resample_dir))
     for objname in objects:
-        if (os.path.isdir(objname)):
+        if (os.path.isdir(objname) and not options.force):
             print "Object %s exists, skipping" % (objname)
             continue
         try:
